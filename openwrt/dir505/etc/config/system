@@ -1,0 +1,17 @@
+
+config system
+	option hostname 'sg1'
+	option timezone 'Europe/Berlin'
+
+config timeserver 'ntp'
+	list server '0.openwrt.pool.ntp.org'
+	list server '1.openwrt.pool.ntp.org'
+	list server '2.openwrt.pool.ntp.org'
+	list server '3.openwrt.pool.ntp.org'
+	option enable_server '0'
+
+config led 'led_wlan'
+	option name 'WLAN'
+	option sysfs 'wrt160nl:blue:wlan'
+	option trigger 'phy0tpt'
+

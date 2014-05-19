@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Create symbolic links from all files in
+# alternative opkg destinations
+#
+# By Stefan Tomanek <stefan@pico.ruhr.de>
+
+# readlink might not be installed, so we probably
+# cannot detect whether a link points to a specific target
+if which readlink >/dev/null; then
+    points_to() {
+        local DST
+        local SRC
+        DST="$1"
+        SRC="$2"
+        [ `readlink "$DST"` = "$SRC" ]
+    }
+else
+    # we cannot determine the target of the link,
+    # so we return false to be on the safe side
+    false
+fi
+
+# find out the installation directories
+awk '$1 == "dest" && $3 != "/" { print $2, $3 }' /etc/opkg.conf | \
+while read DEST DDIR; do
+    echo "Processing destination $DEST..." >&2
+    # if the direktory does not exist, continue
+    [ -d "$DDIR" ] || continue
+
+    for LIST in "$DDIR/usr/lib/opkg/info"/*.list; do
+        [ -e "$LIST" ] || continue;
+        PKG=${LIST##*/}
+        PKG=${PKG%.list}
+        echo "  Linking package ${PKG} from $DEST..." >&2
+        while read FSRC; do
+            FDST=${FSRC#$DDIR}
+            
+            FDSTDIR=${FDST%/*}/
+            [ ! -d "$FDSTDIR" ] && {
+                echo "   Creating directory $FDSTDIR..." >&2
+                mkdir -p "$FDSTDIR"
+            }
+            if [ ! -e "$FDST" ] || [ -L "$FDST" ]; then
+                # do not rewrite every link
+                if [ -L "$FDST" ] && [ `readlink "$FDST"` = "$FSRC" ]; then
+                    :
+                    #echo "   $FDST already linked." >&2
+                else
+                    echo "   linking $FSRC -> $FDST" >&2
+                    ln -sf "$FSRC" "$FDST" 
+                fi
+            else
+                echo "   Not replacing existing file $FDST!" >&2
+            fi
+        done < "$LIST"
+  done
+done

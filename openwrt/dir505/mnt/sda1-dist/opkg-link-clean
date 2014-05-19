@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Find dangling symlinks that point into
+# opkg destination
+#
+# this script must be called with an pkg destination as first
+# argument
+#
+# By Stefan Tomanek <stefan@pico.ruhr.de>
+
+DEST=$1
+
+DDIR=`awk -vDEST=$DEST '$1 == "dest" && $2 == DEST { print $3 }' /etc/opkg.conf`
+
+[ -z "$DDIR" ] && exit 1
+
+find / -xdev -type l | while read L; do
+    readlink $L
+done | grep "^${DDIR}" | while read T; do
+    [ ! -e "$T" ] && echo ${T#$DDIR}
+done
