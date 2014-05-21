@@ -3,11 +3,11 @@
  |_ -|| | || . || -_||  _|| . || || | || -_|
  |___||___||  _||___||_|  |_  ||_||___||___|
            |_|   personal |___| server
- 
+ http://superglue.it 
  -----------------------------------------------------
- (based on OpenWRT trunk r40774)
+ based on OpenWRT r40774 (trunk)
  -----------------------------------------------------
- provides now:            will provide soon:
+ provides now:            will provide:
    * HTTP (lighthttp)       * SMTP      
    * Bash CGI               * IMAP
                             * Lua CGI

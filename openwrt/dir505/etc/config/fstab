@@ -10,3 +10,9 @@ config 'global' 'automount'
   option  'from_fstab'  '1'
   option  'anon_mount'  '1'
 
+config 'mount'
+  option 'label'  'superglue'
+  option 'enabled'    '1'
+  option 'enabled_fsck'   '0'
+  option 'options'  'remount,rw,nosuid,noatime'
+
