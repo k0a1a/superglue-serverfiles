@@ -19,7 +19,9 @@ if [[ ! -e "$_ARC" ]]; then
   echo -n "$(date): fetching $_ARC "
   curl -OJs "$_URL" || exit 1
   echo "OK"
-else exit 0
+else 
+#  echo 'im up-to-date'
+  exit 0
 fi
 
 _DIR=($(tar xvzf $_ARC 2>/dev/null))
@@ -31,7 +33,13 @@ fi
 
 cp -Rf "$_DIR"/* $_WWW/ &&
 chown -R $_USER $_WWW/* &&
-echo -n "$(date): update OK"
+_OUT="$(date): update OK"
+
+echo "$_OUT"
+
+if [[ ! -z "_OUT" ]]; then 
+	echo -e "Subject: pull-serverside-repo.sh\n$_ARC\n$_OUT" | sendmail -f'sg1@superglue.it' -t -s192.168.1.100 robot@k0a1a.net
+fi
 
 ## remove old archives and unpacked directory
 for i in $(ls -1d serverside* | grep -v "$_ARC"); do rm -Rf "$i"; done 
