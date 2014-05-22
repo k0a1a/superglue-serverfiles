@@ -1,0 +1,19 @@
+config 'global'
+  option  'anon_swap'   '0'
+  option  'anon_mount'  '0'
+  option  'auto_swap'   '0'
+  option  'auto_mount'  '0'
+  option  'delay_root'  '5'
+  option  'check_fs'    '0'
+
+config 'global' 'automount'
+  option  'from_fstab'  '1'
+  option  'anon_mount'  '0'
+
+config 'mount'
+  option 'label'        'superglue'
+  option 'target'       '/www/htdocs'
+  option 'enabled'      '1'
+  option 'enabled_fsck' '0'
+  option 'options'      'rw,noatime'
+
