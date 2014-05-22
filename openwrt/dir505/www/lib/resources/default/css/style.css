@@ -1,0 +1,236 @@
+/*******************
+* Fonts
+*******************/
+
+@font-face {
+    font-family: Dosis;
+    src: url("../fonts/Dosis/Dosis-Regular.otf") format("opentype");
+}
+@font-face {
+    font-family: Dosis;
+    font-weight: bold;
+    src: url("../fonts/Dosis/Dosis-Bold.otf") format("opentype");
+}
+@font-face {
+    font-family: Dosis;
+    font-weight: light;
+    src: url("../fonts/Dosis/Dosis-Light.otf") format("opentype");
+}
+
+@font-face {
+    font-family: Montserrat;
+    src: url("../fonts/Montserrat/Montserrat-Regular.ttf") format("truetype");
+}
+@font-face {
+    font-family: Montserrat;
+    font-weight: bold;
+    src: url("../fonts/Montserrat/Montserrat-Bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: TitilliumWeb;
+    src: url("../fonts/Titillium_Web/TitilliumWeb-Regular.ttf") format("truetype");
+}
+@font-face {
+    font-family: TitilliumWeb;
+    font-weight: bold;
+    src: url("../fonts/Titillium_Web/TitilliumWeb-Bold.ttf") format("truetype");
+}
+@font-face {
+    font-family: TitilliumWeb;
+    font-weight: light;
+    src: url("../fonts/Titillium_Web/TitilliumWeb-Light.ttf") format("truetype");
+}
+
+
+/*******************
+* Generic
+*******************/
+
+#globalEditBtn {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	background: orange;
+	z-index: 10000000;
+}
+
+body {
+	font-family: 'Arial', 'Helvetica', sans-serif;
+}
+
+/*******************
+* Font Class Definitions
+*******************/
+
+.align-left {
+	text-align: left;
+}
+
+.align-center {
+	text-align: center;
+}
+
+.align-justify {
+	text-align: justify;
+}
+
+.align-right {
+	text-align: right;
+}
+
+/*******************
+* Spaces & Shapes
+*******************/
+
+.space {
+	top:0;
+	left:0;
+	width: 100%;
+	height: 100%;
+}
+
+.space > .spaceContent {
+	border-width: 0;
+	border-style: solid;
+	border-color: transparent;
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.space.root {
+	overflow: auto;
+	position: relative;
+}
+
+.shape > a {
+    color: inherit;
+    text-decoration: inherit;
+}
+
+.shape .shapeContent {
+	overflow: hidden;
+	border-width: 0;
+	border-style: solid;
+	border-color: transparent;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+body > .space {
+	position: absolute;
+}
+
+/* Absolute Space */
+
+.space[data-type="AbsoluteSpace"] {
+	
+}
+
+.space[data-type="AbsoluteSpace"] .shape, .space[data-type="AbsoluteSpace"] .space {
+	position: absolute;
+}
+
+.space[data-type="AbsoluteSpace"] .shape .shapeContent {
+	height: 100%;
+	background-color: transparent;
+}
+
+.space[data-type="AbsoluteSpace"] .shape[data-type="TextShape"] {
+	
+}
+
+.space[data-type="AbsoluteSpace"] .shape[data-type="ImageShape"] {
+	
+}
+
+.shape[data-type="ImageShape"] img, body > .shape[data-type="ImageShape"] img {
+	height: auto !important;
+    max-height: 100%;
+    max-width: 100%;
+    width: auto !important;
+}
+
+
+/* Grid Space */
+
+.space[data-type="GridSpace"] {
+	
+}
+
+.space[data-type="GridSpace"] .shape, .space[data-type="GridSpace"] .space {
+	position: absolute;
+	display: block;
+}
+
+.space[data-type="GridSpace"] .shape .shapeContent {
+	width: 100%;
+	height: 100%;
+	padding: 0;
+}
+
+.space[data-type="GridSpace"] .shape[data-type="TextShape"] {
+	
+}
+
+.space[data-type="GridSpace"] .shape[data-type="ImageShape"] {
+	
+}
+
+/* Center Space */
+
+.root.space[data-type="CenterSpace"] {
+	width: 100% !important;
+}
+
+.space[data-type="CenterSpace"] .shape, .space[data-type="CenterSpace"] .space {
+	position: absolute;
+	left: 50%;
+	display: block;
+}
+
+.space[data-type="CenterSpace"] .shape .shapeContent {
+	width: 100%;
+	height: 100%;
+	padding: 0;
+}
+
+.space[data-type="CenterSpace"] .shape[data-type="TextShape"] {
+	
+}
+
+.space[data-type="CenterSpace"] .shape[data-type="ImageShape"] {
+	
+}
+
+
+
+/*******************
+* Media Queries
+*******************/
+
+@media (min-width: 1220px) and (max-width: 2000px) {
+	
+}
+
+@media (min-width: 1010px) and (max-width: 1220px) {
+	
+}
+
+@media (min-width: 650px) and (max-width: 1010px) {
+	
+}
+
+@media (max-width: 650px) {
+
+}
+
+@media screen and (max-width: 480px) {
+	
+}

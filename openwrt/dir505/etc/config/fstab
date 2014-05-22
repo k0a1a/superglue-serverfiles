@@ -12,7 +12,7 @@ config 'global' 'automount'
 
 config 'mount'
   option 'label'        'superglue'
-  option 'target'       '/www'
+  option 'target'       '/www/htdocs'
   option 'enabled'      '1'
   option 'enabled_fsck' '0'
   option 'options'      'rw,noatime'

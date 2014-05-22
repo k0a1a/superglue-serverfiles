@@ -1,21 +1,19 @@
-# some checks specific to SuperGlue
+## some checks specific to SuperGlue
+
+## where SuperGlue storage is mounted 
+_SG=/www/htdocs
 
 ## if /www is mounted
-mountpoint -q /www && (
+mountpoint -q $_SG && (
 
   ## if not writable chown with httpd
-  [ $(stat /www -c %U) != 'httpd' ] && chown -R httpd /www
-  [ $(stat /www -c %a) -lt '755' ] && chmod -R u+rwX /www
+  [ $(stat $_SG -c %U) != 'httpd' ] && chown -R httpd $_SG
+  [ $(stat $_SG -c %a) -lt '755' ] && chmod -R u+rwX $_SG
 
   ## if /www/tmp does not exist
   [ ! -d /www/tmp ] && (
-    mkdir /www/tmp
-    chown -R httpd /www/tmp
-  )
-  ## if /www/htdocs does not exits
-  [ ! -d /www/htdocs ] && (
-    mkdir /www/htdocs
-    chown -R httpd /www/htdocs
+    mkdir /www/tmp && chown httpd /www/tmp
+    )
   )
 )
 
