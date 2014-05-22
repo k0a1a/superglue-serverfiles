@@ -1,0 +1,9 @@
+_MAC=$(iw wlan0 info | awk 'BEGIN { FS=":" } /addr/ { print $5$6 }')                 
+_MAC="SuperGlue-"$_MAC                                                               
+
+[ $(uci get wireless.@wifi-iface[0].ssid) != $_MAC ] && (
+  uci set wireless.@wifi-iface[0].ssid=$_MAC
+  uci commit
+  )
+
+exit 1
