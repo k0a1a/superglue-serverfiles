@@ -25,10 +25,10 @@ mountpoint -q $_SG && (
   done
 
   ## if /www/tmp does not exist
-  [ -d /www/tmp ] || (
-    mkdir /www/tmp && chown httpd /www/tmp
-    )
+#  [ -d $_SG/tmp ] || (
+#    mkdir $_SG/tmp && chown httpd $_SG/tmp
+#    )
+
   )
-)
 
 exit 0

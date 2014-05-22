@@ -20,7 +20,7 @@ set -o noglob
 ## some path variables
 _WWW='/www'
 _HTDOCS="${_WWW}/htdocs"
-_TMP="${_WWW}/tmp"
+_TMP="/tmp"
 _LOG="${_TMP}/post.log"
 
 ## _DEBUG=0 no logging at all
