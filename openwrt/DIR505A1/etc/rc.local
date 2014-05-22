@@ -3,6 +3,9 @@
 ## where SuperGlue storage is mounted 
 _SG=/www/htdocs
 
+## mount if needed
+mountpoint -q $_SG || block mount $_SG
+
 ## if /www is mounted
 mountpoint -q $_SG && (
 
