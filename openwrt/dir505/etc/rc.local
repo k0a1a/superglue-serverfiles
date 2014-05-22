@@ -10,8 +10,14 @@ mountpoint -q $_SG && (
   [ $(stat $_SG -c %U) != 'httpd' ] && chown -R httpd $_SG
   [ $(stat $_SG -c %a) -lt '755' ] && chmod -R u+rwX $_SG
 
+  ## check if index.html is present
+  [ -e $_SG/index.html ] || (
+    cp /www/lib/resources/index.html $_SG
+    chown httpd $_SG/index.html
+    )
+
   ## if /www/tmp does not exist
-  [ ! -d /www/tmp ] && (
+  [ -d /www/tmp ] || (
     mkdir /www/tmp && chown httpd /www/tmp
     )
   )
