@@ -110,7 +110,7 @@ pwdChange() {
     showMesg 'Password must be at least 6 characters long'
   fi
 
-  # TODO: runSuid "echo -e '$_pwd\n$_pwd' | (passwd --stdin admin)"
+  runSuid "echo -e '$_pwd\n$_pwd' | passwd root"
   runSuid "echo $(htDigest $_pwd) > $_PWDFILE"
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
@@ -135,7 +135,6 @@ ssidChange() {
     setUci ssid $_ssid
     _ERR=$?
     [[ $_ERR -gt 0 ]] && showMesg 'New SSID is not set'
-  else showMesg 'SSID not changed'
   fi
 
   if [[ $_key != $_pkey ]]; then 
@@ -152,7 +151,6 @@ ssidChange() {
       _ERR=$?
       [[ $_ERR -gt 0 ]] && showMesg 'Passphrase is not set'
     fi
-  else showMesg 'Passphrase not changed'
   fi
 
   [[ $_ERR -gt 0 ]] && showMesg 'Wireless changes failed'
@@ -171,7 +169,7 @@ showMesg() {
   local _MSG=$1
   local _SUBMSG=$2
   _MSG=${_MSG:='Not defined'}
-  _SUBMSG=${_SUBMSG:='Returning to admin page in a second..'}
+  _SUBMSG=${_SUBMSG:='back to control panel in a second..'}
   if [[ $_ERR -gt 0 ]]; then
     local _TYPE='ERROR: '
     headerPrint 406
@@ -184,8 +182,12 @@ showMesg() {
 <img src='/resources/default/img/placeholder.png' class='logo'>
 <hr>
 <h2 style='display:inline'>$_TYPE $_MSG</h2>
-<span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>
-<hr>
+<span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>"
+  if [[ $_ERR -eq 0 ]]; then
+    echo "<form action=${HTTP_REFERER} method='get'><input type='submit' value='Back'></form>"
+  fi
+
+echo "<hr>
 </body></html>"
   exit 0
 }
@@ -260,7 +262,7 @@ $@
 body { background:#ccc; color:#000; margin: 20px 0 0 200px; font-family: TitilliumWeb;}
 input { display: block; }
 .inline { display: inline; }
-img.logo { position: absolute; left:50px; top: 20px; width:100px; }
+img.logo { position: absolute; left:50px; top: 20px;}
 pre { white-space: pre-wrap; }
 @font-face { font-family: TitilliumWeb; src: url('/resources/default/fonts/Titillium_Web/TitilliumWeb-Regular.ttf') format('truetype'); }
 @font-face { font-family: TitilliumWeb; font-weight: bold; src: url('/resources/default/fonts/Titillium_Web/TitilliumWeb-Bold.ttf') format('truetype'); }
