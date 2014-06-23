@@ -203,13 +203,13 @@ updateFw() {
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
   showMesg 'Firmware update is completed, rebooting..' 'this might take up to 60 seconds'
-  runSuid reboot -w
+  runSuid reboot
 }
 
 rebootNow() {
   logThis "reboot: now!"
   showMesg 'Rebooting..' 'this might take up to 60 seconds'
-  runSuid reboot -w
+  runSuid reboot
 }
 
 getUci() {
