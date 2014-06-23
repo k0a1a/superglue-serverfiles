@@ -17,3 +17,10 @@ config 'mount'
   option 'enabled_fsck' '0'
   option 'options'      'rw,noatime'
 
+config 'mount'
+  option 'label'        'SUPERGLUE'
+  option 'target'       '/www/htdocs'
+  option 'enabled'      '1'
+  option 'enabled_fsck' '0'
+  option 'options'      'rw,noatime'
+
