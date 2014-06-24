@@ -182,12 +182,8 @@ showMesg() {
 <img src='/resources/default/img/placeholder.png' class='logo'>
 <hr>
 <h2 style='display:inline'>$_TYPE $_MSG</h2>
-<span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>"
-  if [[ $_ERR -eq 0 ]]; then
-    echo "<form action=${HTTP_REFERER} method='get'><input type='submit' value='Back'></form>"
-  fi
-
-echo "<hr>
+<span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>
+<hr>
 </body></html>"
   exit 0
 }
@@ -202,14 +198,14 @@ updateFw() {
   _OUT="$(runSuid /sbin/mtd -q write $_FWFILE firmware)"
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
-  showMesg 'Firmware update is completed, rebooting..' 'this might take up to 60 seconds'
   runSuid reboot
+  showMesg 'Firmware update is completed, rebooting..' 'this might take up to 60 seconds'
 }
 
 rebootNow() {
   logThis "reboot: now!"
-  showMesg 'Rebooting..' 'this might take up to 60 seconds'
   runSuid reboot
+  showMesg 'Rebooting..' 'this might take up to 60 seconds'
 }
 
 getUci() {

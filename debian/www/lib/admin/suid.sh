@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SHELL=/bin/bash
+SHELL=/bin/bash
 
 if [[ $EUID -ne 0 ]]; then echo 'root only'; exit 1; fi
 
@@ -20,7 +20,7 @@ if [[ $EUID -ne 0 ]]; then echo 'root only'; exit 1; fi
 #_LSID=$(ps -C lighttpd -o sid=)
 
 ## parent session id
-#_PSID=${@: -1}
+_PSID=${@: -1}
 
 ## our session id
 #_SID=$(ps -p$$ -o sid=)
