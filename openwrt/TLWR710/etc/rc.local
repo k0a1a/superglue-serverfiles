@@ -15,14 +15,14 @@ mountpoint -q $_SG && (
 
   ## check if index.html is present
   [ -e $_SG/index.html ] || (
-    cp /www/lib/resources/index.html $_SG
-    chown httpd $_SG/index.html
+    cp /www/lib/resources/index.html $_SG/default.html
+    chown httpd $_SG/default.html
     )
 
   ## check symlinking
-  for i in devTools resources templates; do
-    [ -L $_SG/$i ] || ln -s /www/lib/$i $_SG/$i
-  done
+#  for i in devTools resources templates; do
+#    [ -L $_SG/$i ] || ln -s /www/lib/$i $_SG/$i
+#  done
 
   ## if /www/tmp does not exist
 #  [ -d $_SG/tmp ] || (

@@ -8,7 +8,7 @@
  based on OpenWRT r40774 (trunk)
  -----------------------------------------------------
  provides now:            will provide:
-   * HTTP (lighthttp)       * SMTP      
+   * HTTP (lighttpd)        * SMTP      
    * Bash CGI               * IMAP
                             * Lua CGI
  -----------------------------------------------------
