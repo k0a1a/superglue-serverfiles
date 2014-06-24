@@ -308,7 +308,8 @@ echo "<body>
 <img src='/resources/default/img/placeholder.png' class='logo'>
 <hr>
 <h2 style='display:inline'>Superglue server control panel</h2>
-<span style='display:inline; margin-left: 50px;'>$(uptime)</span>
+<span style='display:inline; margin-left: 50px;'>System version: "$(cat /etc/superglue_version || echo 'n/a')" | Device: "$(cat /etc/superglue_model || echo 'n/a')" | OpenWRT: "$(cat /etc/openwrt_version || echo 'n/a')"</span>
+<span style='display:block;'>$(uptime)</span>
 <hr>
 
 Change password:
