@@ -349,15 +349,16 @@ Update firmware:
 </form>
 
 <hr>
-
-$_POST
-
-Environment:
-<pre>$(env)</pre>
 Memory:
 <pre>$(free)</pre>
+<hr>
 Storage:
 <pre>$(df -h)</pre>
+<hr>
+Environment:
+<pre>$(env)</pre>
+<hr>
+$_POST
 
 </body></html>"
 
