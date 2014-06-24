@@ -199,14 +199,14 @@ updateFw() {
   _OUT=$(runSuid "ls /root")
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
+  runSuid reboot
   showMesg 'Firmware update is completed, rebooting..' 'this might take up to 60 seconds'
-  runSuid reboot -w
 }
 
 rebootNow() {
   logThis "reboot: now!"
+  runSuid reboot
   showMesg 'Rebooting..' 'this might take up to 60 seconds'
-  runSuid reboot -w
 }
 
 getUci() {
