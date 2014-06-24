@@ -1,6 +1,6 @@
 
 config system
-	option hostname 'sg'
+  option hostname 'sg'
   ## Made in Berlin
 	option timezone 'CET-1CEST'
 
@@ -13,7 +13,7 @@ config timeserver 'ntp'
 
 config led 'led_lan'
 	option name 'LAN'
-	option sysfs 'd-link:green:power'
+	option sysfs 'tp-link:blue:system'
 	option trigger 'netdev'
 	option dev 'eth1'
 	option dev 'wlan0'
