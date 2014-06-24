@@ -4,6 +4,7 @@ _MAC="SuperGlue-"$_MAC
 [ $(uci get wireless.@wifi-iface[0].ssid) != $_MAC ] && (
   uci set wireless.@wifi-iface[0].ssid=$_MAC
   uci commit
+  ( sleep 1; reboot; )&
   )
 
-exit 1
+exit 0
