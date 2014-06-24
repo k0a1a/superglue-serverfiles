@@ -6,7 +6,7 @@ _MAC="SuperGlue-"$_MAC
   uci commit
   wifi
   /etc/init.d/network restart
-  /etc/init.d/dhcpd restart
+  /etc/init.d/odhcpd restart
   )
 
 exit 0
