@@ -1,7 +1,8 @@
 
 config system
 	option hostname 'sg'
-	option timezone 'UTC'
+  ## Made in Berlin
+	option timezone 'CET-1CEST'
 
 config timeserver 'ntp'
 	list server '0.openwrt.pool.ntp.org'
@@ -15,5 +16,6 @@ config led 'led_lan'
 	option sysfs 'd-link:green:power'
 	option trigger 'netdev'
 	option dev 'eth1'
+	option dev 'wlan0'
 	option mode 'link tx rx'
 
