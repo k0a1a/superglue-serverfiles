@@ -1,36 +1,16 @@
-config wifi-device  radio0
-	option type     mac80211
-	option channel  1
-	option country	DE
-	option hwmode	11ng
-	option macaddr	00:23:69:f9:62:17
-	option htmode	HT20
-	list ht_capab	SHORT-GI-40
-	list ht_capab	DSSSi_CCK-40
-	list ht_capab	HT40+
-	list ht_capab	HT40-
-	# option noscan	1
-	# REMOVE THIS LINE TO ENABLE WIFI:
-	option disabled 1
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option channel 'auto'
+	option hwmode '11gn'
+	option path 'platform/ar933x_wmac'
+	option noscan 1
+	option htmode 'HT20'
+	option country DE
 
 config wifi-iface
-	option device   radio0
-	option network  lan
-	option ifname 	wlan0
-#	option mode     monitor
-	option mode	ap
-	option ssid     superglue
-	option encryption psk2
-	option key	5upr3w3b
-#	option encryption none
+	option device 'radio0'
+	option network 'lan'
+	option mode 'ap'
+	option encryption 'none'
+	option ssid 'superglue'
 
-#config wifi-iface
-#	option device   radio0
-#	option network  lan
-#	option ifname   wlan1
-#	option mode     ap
-#	option ssid     PublicWireless
-#	option encryption psk2
-#	option key	asda_666
-#	option encryption none
-                                       
