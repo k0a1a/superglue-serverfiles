@@ -1,0 +1,5 @@
+[ -e /etc/config/fstab ] && [ -z $(find /etc/rc.d/ -name 'S??fstab') ] && ( 
+  /etc/init.d/fstab enable
+  /etc/init.d/fstab start
+  )
+

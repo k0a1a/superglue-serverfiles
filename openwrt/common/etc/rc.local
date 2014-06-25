@@ -1,0 +1,34 @@
+## some checks specific to SuperGlue
+
+## where SuperGlue storage is mounted 
+_SG=/www/htdocs
+
+## mount if needed
+mountpoint -q $_SG || block mount $_SG
+
+## if /www is mounted
+mountpoint -q $_SG && (
+
+  ## if not writable chown with httpd
+  [ $(stat $_SG -c %U) != 'httpd' ] && chown -R httpd $_SG
+  [ $(stat $_SG -c %a) -lt '755' ] && chmod -R u+rwX $_SG
+
+  ## check if index.html is present
+  [ -e $_SG/index.html ] || (
+    cp /www/lib/resources/index.html $_SG/default.html
+    chown httpd $_SG/default.html
+    )
+
+  ## check symlinking
+#  for i in devTools resources templates; do
+#    [ -L $_SG/$i ] || ln -s /www/lib/$i $_SG/$i
+#  done
+
+  ## if /www/tmp does not exist
+#  [ -d $_SG/tmp ] || (
+#    mkdir $_SG/tmp && chown httpd $_SG/tmp
+#    )
+
+  )
+
+exit 0
