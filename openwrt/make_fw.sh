@@ -16,8 +16,8 @@ _MAJOR='0.1'  ## bump that on major changes
 _SUFFIX='git'  ## could be 'beta', 'rc', etc
 
 ## read build serial, incremented on every successful build
-if [[ -e sg.revision ]]; then
-  read _MINOR < sg.revision
+if [[ -e sg_$_MAJOR.revision ]]; then
+  read _MINOR < sg_$_MAJOR.revision
   let _MINOR++
 else _MINOR=0
 fi
@@ -41,14 +41,13 @@ for _TARGET in $_TARGETS; do
   cp -Ra $_TARGET/* $_TARGET.tmp/
 
   echo $_VERSION > $_TARGET.tmp/etc/superglue_version
-
   cd $_IMAGEBUILDER && make clean
 
-  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 kmod-fs-vfat block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BUILDS/"$_VERSION+$_OPENWRT"/$_TARGET/openwrt && 
+  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 kmod-fs-vfat block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BUILDS/$_VERSION/$_TARGET/openwrt && 
 
-  cp $_BUILDS/"$_VERSION+$_OPENWRT"/$_TARGET/openwrt/openwrt-*-factory.bin $_BUILDS/"$_VERSION+$_OPENWRT"/$_TARGET/superglue-firmware-$(echo $_TARGET | tr [:upper:] [:lower:])-$_VERSION-factory.bin
-  cp $_BUILDS/"$_VERSION+$_OPENWRT"/$_TARGET/openwrt/openwrt-*-sysupgrade.bin $_BUILDS/"$_VERSION+$_OPENWRT"/$_TARGET/superglue-firmware-$(echo $_TARGET | tr [:upper:] [:lower:])-$_VERSION-sysupgrade.bin
-  cd $_BUILDS/"$_VERSION+$_OPENWRT"/$_TARGET
+  cp $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-factory.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$(echo $_TARGET | tr [:upper:] [:lower:])-$_VERSION-factory.bin
+  cp $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-sysupgrade.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$(echo $_TARGET | tr [:upper:] [:lower:])-$_VERSION-sysupgrade.bin
+  cd $_BUILDS/$_VERSION/$_TARGET
   md5sum *.bin > md5sums
   cd -
 
@@ -63,7 +62,7 @@ done
 
 if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
-  echo $_MINOR > sg.revision
+  echo $_MINOR > sg_$_MAJOR.revision
   echo -e "\nSUCCESS\n"
 else
   echo -e "\nFAILED\n"
