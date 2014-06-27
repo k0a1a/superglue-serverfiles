@@ -45,13 +45,18 @@ for _TARGET in $_TARGETS; do
 
   make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 kmod-fs-vfat block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BUILDS/$_VERSION/$_TARGET/openwrt && 
 
-  cp $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-factory.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$(echo $_TARGET | tr [:upper:] [:lower:])-$_VERSION-factory.bin
-  cp $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-sysupgrade.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$(echo $_TARGET | tr [:upper:] [:lower:])-$_VERSION-sysupgrade.bin
+  ln -s $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-factory.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$_VERSION-$(echo $_TARGET | tr [:upper:] [:lower:])-factory.bin
+  ln -s $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-sysupgrade.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$_VERSION-$(echo $_TARGET | tr [:upper:] [:lower:])-sysupgrade.bin
   cd $_BUILDS/$_VERSION/$_TARGET
   md5sum *.bin > md5sums
   cd -
 
-  [[ $? -eq 0 ]] && echo -e "\n$_TARGET build completed\n" || _ERR=$?
+  if [[ $? -eq 0 ]]; then 
+    echo -e "\n$_TARGET build completed\n"
+  else
+    _ERR=$?
+    rm -Rf $_BUILDS/$_VERSION/$_TARGET
+  fi
 
   echo 'Cleaning up..'
   make clean
@@ -64,6 +69,7 @@ if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
   echo $_MINOR > sg_$_MAJOR.revision
   echo -e "\nSUCCESS\n"
+  ln -sf $_BUILDS/$_VERSION $_BUILDS/current
 else
   echo -e "\nFAILED\n"
 fi
