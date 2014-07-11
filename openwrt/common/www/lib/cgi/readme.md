@@ -1,6 +1,6 @@
-Serverside scripts for SuperGlue server
-Documentation | Files | Commits
+## Serverside scripts for SuperGlue server
 
+```
 ## post.sh - all POST requests are redirected to this script.                                                
 ## 
 ## examples:
@@ -10,6 +10,7 @@ Documentation | Files | Commits
 ##
 ## returns: 200 (+ output of operation) on success
 ##          406 (+ error message in debug mode) on error
+```
 Curently, there is only one live and public SuperGlue server running this CGI, try it: http://test.superglue.it
 
 SuperGlue browser extension / client that talks to post.sh can be found here: http://git.superglue.it/superglue/clientplugin/repository/archive.zip
