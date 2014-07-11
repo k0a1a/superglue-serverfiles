@@ -69,7 +69,16 @@ if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
   echo $_MINOR > sg_$_MAJOR.revision
   echo -e "\nSUCCESS\n"
-  ln -sf $_BUILDS/$_VERSION $_BUILDS/current
+
+  ## create symlinks to latest
+  [[ -e $_BUILDS/latest ]] && touch $_BUILDS/latest || mkdir $_BUILDS/latest 
+  for _TARGET in $_TARGETS; do
+    [[ -e $_BUILDS/latest/$_TARGET ]] && rm -f $_BUILDS/latest/$_TARGET/* || mkdir $_BUILDS/latest/$_TARGET
+
+    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-factory.bin $_BUILDS/latest/$_TARGET/superglue-firmware-latest-$(echo $_TARGET | tr [:upper:] [:lower:])-factory.bin
+    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-sysupgrade.bin $_BUILDS/latest/$_TARGET/superglue-firmware-latest-$(echo $_TARGET | tr [:upper:] [:lower:])-sysupgrade.bin
+  done
+
 else
   echo -e "\nFAILED\n"
 fi
