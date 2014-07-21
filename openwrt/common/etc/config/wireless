@@ -12,5 +12,13 @@ config wifi-iface
 	option network 'lan'
 	option mode 'ap'
 	option encryption 'none'
-	option ssid 'superglue'
+  option ssid 'superglue'
+
+#config wifi-iface
+#  option device 'radio0'
+#  option network 'wan'
+#  option mode 'sta'
+#  option ssid '<bssid>'
+#  option encryption 'psk2'
+#  option key '<passphrase>'
 
