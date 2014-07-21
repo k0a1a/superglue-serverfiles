@@ -1,0 +1,11 @@
+#!/bin/sh
+JFFS=/jffs/
+
+# list all packages that have been installed additionally
+# to the squashfs (useful for upgrades)
+
+for LIST in $JFFS/usr/lib/opkg/info/*.list; do
+    PKG=${LIST##*/}
+    PKG=${PKG%.list}
+    echo $PKG
+done
