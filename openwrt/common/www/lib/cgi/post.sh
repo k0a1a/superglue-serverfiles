@@ -84,10 +84,17 @@ errorCheck() {
   exit $_ERR
 }
 
+## get data from argv=data pair in POST request
+## (any 4 character arg in the beginning of string is matched)
+postGetData() {
+  _POST="${_POST##????'='}"
+}
+
 ## urlencoded POST dispatcher
 postUrlenc() {
   ## decode stream
   _POST=$(urlDecode "$(< $_POST_TMP)")  ## decode global $_POST
+  postGetData
   case "${_REQUEST_URI}" in
     \/cmd) postCmd  ;;  ## handle /cmd POST
         *) postHtml ;;  ## handle html POST
