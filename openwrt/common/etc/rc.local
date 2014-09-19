@@ -1,6 +1,6 @@
-## some checks specific to SuperGlue
+## some checks specific to Superglue
 
-## where SuperGlue storage is mounted 
+## where Superglue storage is mounted 
 _SG=/www/htdocs
 
 ## mount if needed
@@ -18,6 +18,16 @@ mountpoint -q $_SG && (
     cp /www/lib/resources/index.html $_SG/default.html
     chown httpd $_SG/default.html
     )
+
+  ## check for log directory
+  [ -e $_SG/log ] || ( mkdir $_SG/log
+    chown httpd $_SG/log
+    }
+
+  ## check for tmp directory
+  [ -e $_SG/tmp ] || ( mkdir $_SG/tmp
+    chown httpd $_SG/tmp
+    }
 
   ## check symlinking
 #  for i in devTools resources templates; do
