@@ -1,0 +1,57 @@
+/*******************
+* Fonts
+*******************/
+
+@font-face {
+    font-family: Dosis;
+    src: url("../fonts/Dosis/Dosis-Regular.otf") format("opentype");
+}
+@font-face {
+    font-family: Dosis;
+    font-weight: bold;
+    src: url("../fonts/Dosis/Dosis-Bold.otf") format("opentype");
+}
+@font-face {
+    font-family: Dosis;
+    font-weight: light;
+    src: url("../fonts/Dosis/Dosis-Light.otf") format("opentype");
+}
+
+@font-face {
+    font-family: Montserrat;
+    src: url("../fonts/Montserrat/Montserrat-Regular.ttf") format("truetype");
+}
+@font-face {
+    font-family: Montserrat;
+    font-weight: bold;
+    src: url("../fonts/Montserrat/Montserrat-Bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: TitilliumWeb;
+    src: url("../fonts/Titillium_Web/TitilliumWeb-Regular.ttf") format("truetype");
+}
+@font-face {
+    font-family: TitilliumWeb;
+    font-weight: bold;
+    src: url("../fonts/Titillium_Web/TitilliumWeb-Bold.ttf") format("truetype");
+}
+@font-face {
+    font-family: TitilliumWeb;
+    font-weight: light;
+    src: url("../fonts/Titillium_Web/TitilliumWeb-Light.ttf") format("truetype");
+}
+
+/*******************
+* Style Resets
+*******************/
+
+p {
+    margin: 0;
+    padding: 0;
+}
+
+ol, ul {
+    margin-top: 0;
+    margin-bottom: 0;
+}
