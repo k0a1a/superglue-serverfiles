@@ -202,7 +202,7 @@ showMesg() {
   fi
   htmlHead "<meta http-equiv='refresh' content='5;url=${HTTP_REFERER}'>"
   echo "<body>
-<img src='/resources/default/img/placeholder.png' class='logo'>
+<img src='/resources/img/superglueLogo.png' class='logo'>
 <hr>
 <h2 style='display:inline'>$_TYPE $_MSG</h2>
 <span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>
