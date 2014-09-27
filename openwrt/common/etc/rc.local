@@ -4,7 +4,11 @@
 _SG=/www/htdocs
 
 ## mount if needed
-mountpoint -q $_SG || block mount $_SG
+#mountpoint -q $_SG || block mount $_SG
+#mountpoint -q $_SG || mount -L sg-user -o rw,noatime,nodiratime $_SG
+
+## this seems to be the only way to mount btrfs on boot, ups                                                                       
+(sleep 15; mount /dev/sda3 -o rw,noatime,nodiratime $_SG 
 
 ## if /www is mounted
 mountpoint -q $_SG && (
@@ -40,5 +44,9 @@ mountpoint -q $_SG && (
 #    )
 
   )
+
+## needed to make lighty use mounted location for logs
+/etc/init.d/lighttpd restart
+)&
 
 exit 0

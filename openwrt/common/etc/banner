@@ -5,7 +5,7 @@
            |_|   personal |___| server
  http://superglue.it 
  -----------------------------------------------------
- based on OpenWRT r40774 (trunk)
+ version %VERSION% - based on OpenWRT %REVISION%
  -----------------------------------------------------
  provides now:            will provide:
    * HTTP (lighttpd)        * SMTP      
