@@ -1,5 +1,5 @@
 config system
-  option hostname 'sg'
+  option hostname 'superglue'
   ## Made in Berlin
   option timezone 'CET-1CEST'
 
