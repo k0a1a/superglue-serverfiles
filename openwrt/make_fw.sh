@@ -41,6 +41,8 @@ for _TARGET in $_TARGETS; do
   cp -Ra $_COMMON $_TARGET.tmp
   cp -Ra $_TARGET/* $_TARGET.tmp/
 
+  sed -e "s/%REVISION%/$_OPENWRT/g" -e "s/%VERSION%/$_VERSION/g" $_COMMON/etc/banner > $_TARGET.tmp/etc/banner
+
   echo $_VERSION > $_TARGET.tmp/etc/superglue_version
   cd $_IMAGEBUILDER && make clean
 

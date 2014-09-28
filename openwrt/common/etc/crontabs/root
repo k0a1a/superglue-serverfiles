@@ -1,0 +1,2 @@
+1 6 * * *	/root/logrotate.sh /www/htdocs/logs/access.log; /root/logrotate.sh /www/htdocs/logs/error.log; /etc/init.d/lighttpd restart
+
