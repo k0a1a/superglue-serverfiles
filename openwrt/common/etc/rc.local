@@ -23,32 +23,28 @@ mountpoint -q $_SG && (
 
   ## check if index.html is present
   [ -e $_SG/index.html ] || (
-    cp /www/lib/resources/index.html $_SG/default.html
-    chown httpd $_SG/default.html
+      cp /www/lib/resources/index.html $_SG/default.html
+      chown httpd $_SG/default.html
     )
 
   ## check for log directory
-  [ -e $_SG/logs ] || ( mkdir $_SG/logs
-    chown httpd $_SG/logs
+  [ -e $_SG/logs ] || (
+      mkdir $_SG/logs
+      chown httpd $_SG/logs
+      /etc/init.d/lighttpd reload
     )
 
   ## check for tmp directory
-  [ -e $_SG/tmp ] || ( mkdir $_SG/tmp
-    chown httpd $_SG/tmp
+  [ -e $_SG/tmp ] || (
+      mkdir $_SG/tmp
+      chown httpd $_SG/tmp
     )
 
-  ## check symlinking
-#  for i in devTools resources templates; do
-#    [ -L $_SG/$i ] || ln -s /www/lib/$i $_SG/$i
-#  done
-
-  ## if /www/tmp does not exist
-#  [ -d $_SG/tmp ] || (
-#    mkdir $_SG/tmp && chown httpd $_SG/tmp
-#    )
-
-## needed to make lighty use mounted location for logs
-  /etc/init.d/lighttpd restart
-)&
+  ## check for favicon
+  [ -e $_SG/favicon.ico ] || (
+      cp /www/lib/resources/img/favicon.ico $_SG/favicon.ico
+      chown httpd $_SG/favicon.ico
+    )
+)
 
 exit 0
