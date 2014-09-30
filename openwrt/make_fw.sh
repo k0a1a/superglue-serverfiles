@@ -1,24 +1,24 @@
 #!/bin/bash
 
-## Superglue firmware image builder script
+## Firmware image building script
 ## http://superglue.it | Danja Vasiliev, 2014
 ##
-##  Requirements: 
-##     OpenWRT ImageBuilder blob:
-##        http://downloads.openwrt.org/barrier_breaker/14.07-rc3/ar71xx/generic 
-##        or http://downloads.openwrt.org/snapshots/trunk/ar71xx
-##     Superglue serverfiles repo (which this script is part of):
-##        http://git.superglue.it/superglue/serverfiles/tree/master
+## Needs:
+## - OpenWRT ImageBuilder blob:
+##    http://downloads.openwrt.org/barrier_breaker/14.07-rc3/ar71xx/generic 
+##    or http://downloads.openwrt.org/snapshots/trunk/ar71xx
+## - Superglue serverfiles local repo (which this script is part of):
+##    http://git.superglue.it/superglue/serverfiles/tree/master
 
 _PWD=$(pwd)
 _IMAGEBUILDER="$_PWD/../../../openwrt/OpenWrt-ImageBuilder-ar71xx_generic-for-linux-x86_64"
 _BUILDS="$_PWD/../../../sg-builds"
 
-[[ -e $_IMAGEBUILDER ]] || echo 'ImageBuilder is missing'; exit 1
-[[ -e $_BUILDS ]] || echo 'Builds directory is missing'; exit 1
+[[ -e $_IMAGEBUILDER ]] || (echo 'ImageBuilder is missing'; exit 1;)
+[[ -e $_BUILDS ]] || (echo 'Builds directory is missing'; exit 1;)
 
 ## dirs with platform specific files
-_TARGETS='DIR505A1 TLWR710'
+_TARGETS='DIR505A1 TLWR710 WRT160NL'
 #_TARGETS='DIR505A1'
 
 ## dir with common files
@@ -84,7 +84,7 @@ done
 if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
   echo $_MINOR > sg_$_MAJOR.revision
-  echo -e "\nBuild SUCCESS\n"
+  echo -e "\nBuilding SUCCEEDED! :)\n"
 
   ## create symlinks to latest
   [[ -e $_BUILDS/latest ]] && touch $_BUILDS/latest || mkdir $_BUILDS/latest 
@@ -96,7 +96,7 @@ if [[ $_ERR -eq 0 ]]; then
   done
 
 else
-  echo -e "\nBuild FAIL\n"
+  echo -e "\nBuilding FAILED.. :/\n"
 fi
 
 exit $_ERR

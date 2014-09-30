@@ -1,0 +1,27 @@
+#!/bin/bash
+
+## Simple logrotate script
+## http://superglue.it | Danja Vasiliev, 2014
+##
+## Takes filepath as argument
+
+## backlogs to keep
+_ROTATE=7
+_DATE=$(date +%d.%m.%y-%H:%M:%S)
+_FILE=$1
+
+function err {
+  printf %s": "%s"\n" "$(basename $0)" "$1"; exit 1
+}
+
+[[ -z $1 ]] && err 'missing input file'
+[[ ! -e $1 ]] && err 'input file not readable'
+
+## get number of backlogs and purge unwanted
+_N=( $(ls -1 -r $_FILE*.gz) ) 
+[[ ${#_N[@]} -gt $((_ROTATE-1)) ]] && rm -f ${_N[@]:$((_ROTATE-1)) }
+
+gzip -f $_FILE || err 'failed to gzip file'
+mv $_FILE.gz "$_FILE"_"$_DATE".gz || err 'failed to rename archive'
+
+exit 0

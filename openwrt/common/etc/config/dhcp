@@ -6,7 +6,7 @@ config dnsmasq
 	option localise_queries '1'
 	option rebind_protection '1'
 	option rebind_localhost '1'
-	option local '/home/'
+	option local '/local/'
 	option domain 'home'
 	option expandhosts '1'
 	option nonegcache '0'
