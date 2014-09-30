@@ -11,12 +11,12 @@ config 'global' 'automount'
   option  'anon_mount'  '0' 
 
 ## btrfs is not picked up here
-#config 'mount'
-#  option 'label'        'sg-user'
-#  option 'target'       '/www/htdocs'
-#  option 'enabled'      '1' 
-#  option 'enabled_fsck' '0' 
-#  option 'options'      'noatime,nodiratime'
+config 'mount'
+  option 'label'        'Sg_storage'
+  option 'target'       '/www/htdocs'
+  option 'enabled'      '1' 
+  option 'enabled_fsck' '0' 
+  option 'options'      'rw,noatime,nodiratime'
 
 ## this is for vfat
 #config 'mount'

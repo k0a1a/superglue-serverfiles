@@ -1,7 +1,6 @@
-
 config system
 	option hostname 'superglue'
-  ## Made in Berlin
+	## Made in Berlin
 	option timezone 'CET-1CEST'
 
 config timeserver 'ntp'

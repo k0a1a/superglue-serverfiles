@@ -2,8 +2,8 @@
 
 _PWDFILE='/www/lib/admin/htpasswd'
 
-_TMP='/tmp'
-_LOG="${_TMP}/admin.log"
+_TMP='/www/htdocs/tmp'
+_LOG="/www/htdocs/logs/admin.log"
 
 _DEBUG=1
 
@@ -289,15 +289,14 @@ echo "<!doctype html>
 <html>
 <head><title>SuperGlue | Administration</title>
 $@
-<script type='text/javascript' src='/resources/default/js/jquery.js'></script>
 <style> 
 body { background:#ccc; color:#000; margin: 20px 0 0 200px; font-family: TitilliumWeb;}
 input { display: block; }
 .inline { display: inline; }
 img.logo { position: absolute; left:50px; top: 20px;}
 pre { white-space: pre-wrap; }
-@font-face { font-family: TitilliumWeb; src: url('/resources/default/fonts/Titillium_Web/TitilliumWeb-Regular.ttf') format('truetype'); }
-@font-face { font-family: TitilliumWeb; font-weight: bold; src: url('/resources/default/fonts/Titillium_Web/TitilliumWeb-Bold.ttf') format('truetype'); }
+@font-face { font-family: TitilliumWeb; src: url('/resources/fonts/Titillium_Web/TitilliumWeb-Regular.ttf') format('truetype'); }
+@font-face { font-family: TitilliumWeb; font-weight: bold; src: url('/resources/fonts/Titillium_Web/TitilliumWeb-Bold.ttf') format('truetype'); }
 </style>
 </head>"
 }
@@ -341,7 +340,7 @@ headerPrint 200
 ## html head
 htmlHead
 echo "<body>
-<img src='/resources/default/img/placeholder.png' class='logo'>
+<img src='/resources/img/superglueLogo.png' class='logo'>
 <hr>
 <h2 style='display:inline'>Superglue server control panel</h2>
 <span style='display:inline; margin-left: 50px;'>System version: "$(cat /etc/superglue_version || echo 'n/a')" | Device: "$(cat /etc/superglue_model || echo 'n/a')" | OpenWRT: "$(cat /etc/openwrt_version || echo 'n/a')"</span>
