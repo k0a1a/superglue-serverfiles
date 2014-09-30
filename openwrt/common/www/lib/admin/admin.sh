@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_PWDFILE='/www/lib/admin/htpasswd'
+_PWDFILE='/www/lib/htpasswd'
 
 _TMP='/www/htdocs/tmp'
 _LOG="/www/htdocs/logs/admin.log"
