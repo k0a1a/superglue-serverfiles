@@ -1,4 +1,9 @@
-## some checks specific to Superglue
+#!/bin/bash
+
+## tweaks
+sysctl -w vm.swappiness=10
+
+## checks specific to Superglue
 
 ## where Superglue storage is mounted 
 _SG=/www/htdocs

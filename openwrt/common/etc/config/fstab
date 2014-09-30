@@ -18,10 +18,10 @@ config 'mount'
   option 'enabled_fsck' '0' 
   option 'options'      'rw,noatime,nodiratime'
 
-## this is for vfat
-#config 'mount'
-#  option 'label'        'SUPERGLUE'
-#  option 'target'       '/www/htdocs'
-#  option 'enabled'      '1' 
-#  option 'enabled_fsck' '0' 
-#  option 'options'      'rw,noatime'
+## compatibility
+config 'mount'
+  option 'label'        'sg-user'
+  option 'target'       '/www/htdocs'
+  option 'enabled'      '1' 
+  option 'enabled_fsck' '0' 
+  option 'options'      'rw,noatime,nodiratime'
