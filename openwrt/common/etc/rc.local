@@ -3,48 +3,42 @@
 ## tweaks
 sysctl -w vm.swappiness=10
 
-## checks specific to Superglue
+## some checks specific to Superglue
 
 ## where Superglue storage is mounted 
-_SG=/www/htdocs
+_SG=/mnt/sg
+## htdocs to bind to
+_HTDOCS=/www/htdocs
 
 ## mount if needed
-#mountpoint -q $_SG || block mount $_SG
-#mountpoint -q $_SG || mount -L sg-user -o rw,noatime,nodiratime $_SG
+while ! mountpoint -q $_HTDOCS; do [ $n -gt 30 ] && break;
+  mount --bind $_SG/htdocs $_HTDOCS;
+  let n++
+done
+unset n
+mountpoint -q $_HTDOCS || ( echo 'failed to mount HTDOCS..'; exit 1; )
 
-## this seems to be the only way to mount btrfs on boot, ups                                ## (sleep 15; mount /dev/sda3 -o rw,noatime,nodiratime $_SG 
+## if /www/htdocs is mounted, then..
+  
+## if not writable chown with httpd
+[ $(stat $_HTDOCS -c %U) != 'httpd' ] && chown -R httpd $_HTDOCS
+[ $(stat $_HTDOCS -c %a) -lt '755' ] && chmod -R u+rwX $_HTDOCS
 
-## if /www/htdocs is mounted
-mountpoint -q $_SG && (
+## check if index.html is present
+[ -e $_HTDOCS/index.html ] || (
+  cp /www/lib/resources/demo.html $_HTDOCS/default.html
+  chown httpd $_HTDOCS/default.html
+  )
 
-  ## if not writable chown with httpd
-  [ $(stat $_SG -c %U) != 'httpd' ] && chown -R httpd $_SG
-  [ $(stat $_SG -c %a) -lt '755' ] && chmod -R u+rwX $_SG
+## check for log directory
+[ -e /www/log ] || ( mkdir /www/log
+  chown httpd /www/log
+  /etc/init.d/lighttpd reload
+  )
 
-  ## check if index.html is present
-  [ -e $_SG/index.html ] || (
-      cp /www/lib/resources/index.html $_SG/default.html
-      chown httpd $_SG/default.html
-    )
-
-  ## check for log directory
-  [ -e $_SG/logs ] || (
-      mkdir $_SG/logs
-      chown httpd $_SG/logs
-      /etc/init.d/lighttpd reload
-    )
-
-  ## check for tmp directory
-  [ -e $_SG/tmp ] || (
-      mkdir $_SG/tmp
-      chown httpd $_SG/tmp
-    )
-
-  ## check for favicon
-  [ -e $_SG/favicon.ico ] || (
-      cp /www/lib/resources/img/favicon.ico $_SG/favicon.ico
-      chown httpd $_SG/favicon.ico
-    )
-)
+## check for tmp directory
+[ -e /www/tmp ] || ( mkdir /www/tmp
+  chown httpd /www/tmp
+  )
 
 exit 0

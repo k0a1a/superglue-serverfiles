@@ -1,3 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
-echo 'var.superglueVersion="'$(cat /etc/superglue_version)'"'
+printf '%b' 'var.superglueVersion=' "\"$(cat /etc/superglue_version)\"\n"

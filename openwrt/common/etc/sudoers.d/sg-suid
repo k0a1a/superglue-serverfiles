@@ -1,1 +1,1 @@
-httpd ALL=NOPASSWD: /www/lib/admin/suid.sh
+httpd ALL=NOPASSWD: /www/lib/cgi/suid.sh

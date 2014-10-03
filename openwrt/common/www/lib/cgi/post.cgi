@@ -20,8 +20,13 @@ set -o noglob
 ## some path variables
 _WWW='/www'
 _HTDOCS="${_WWW}/htdocs"
-_TMP="${_HTDOCS}/tmp"
-_LOG="${_HTDOCS}/logs/post.log"
+_TMP="${_WWW}/tmp"
+_LOG="${_WWW}/log/post.log"
+
+## multihost
+#if [[ $HTTP_HOST == 'demo.superglue.it' ]]; then
+#  _HTDOCS="${_WWW}/htdocs-demo"
+#fi
 
 ## _DEBUG=0 no logging at all
 ## _DEBUG=1 writes to $_LOG file

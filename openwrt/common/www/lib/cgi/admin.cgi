@@ -1,9 +1,9 @@
 #!/bin/bash
 
-_PWDFILE='/www/lib/htpasswd'
-
-_TMP='/www/htdocs/tmp'
-_LOG="/www/htdocs/logs/admin.log"
+_WWW='/www'
+_PWDFILE="${_WWW}/lib/htpasswd"
+_TMP="${_WWW}/tmp"
+_LOG="${_WWW}/log/admin.log"
 
 _DEBUG=1
 
