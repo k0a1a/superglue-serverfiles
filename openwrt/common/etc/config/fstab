@@ -20,7 +20,7 @@ config 'mount'
 
 ## compatibility
 config 'mount'
-  option 'device'       '/dev/sda'
+  option 'label'       'SUPERGLUE'
   option 'target'       '/mnt/sg'
   option 'enabled'      '1' 
   option 'enabled_fsck' '0' 

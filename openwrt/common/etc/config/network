@@ -17,7 +17,5 @@ config interface 'lan'
 	option ip6assign '60'
 
 #config interface 'wan'
-## strangely enough 'wlan0-1' goes to 'lan' bridge
-## and 'wlan0' becomes 'wan' interface. works thou!
 #  option ifname 'wlan0'
 #  option proto 'dhcp'

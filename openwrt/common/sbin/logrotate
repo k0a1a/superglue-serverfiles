@@ -6,25 +6,29 @@
 ## Takes filepath(s) as argument:
 ## logrotate /www/access.log [/www/error.log] [/www/admin/admin.log]
 
-## backlogs to keep
-_ROTATE=7
-_DATE=$(date +%d.%m.%y-%H:%M:%S)
-_LOGS=( $* )
+## default settings, redefine in config file mentioned below 
+ROTATE=30  ## backlogs to keep
+DATE=$(date +%d.%m.%y-%H:%M:%S)
+LOGS=( $* )
+
+## source config
+CONF='/etc/logrotate.conf'
+[[ -e $CONF ]] && . $CONF
 
 function err {
   printf %s": "%s"\n" "$(basename $0)" "$1"; exit 1
 }
 
-[[ -z $_LOGS ]] && err 'missing input file'
-[[ ! -e $_LOGS ]] && err 'input file not readable'
+[[ -z $LOGS ]] && err 'missing input file'
+[[ ! -e $LOGS ]] && err 'input file not readable'
 
-for _FILE in ${_LOGS[@]}; do
+for FILE in ${LOGS[@]}; do
   ## get number of backlogs and purge unwanted
-  _N=( $(ls -1 -r $_FILE*.gz &>/dev/null || echo '') ) 
-  [[ ${#_N[@]} -gt $((_ROTATE-1)) ]] && rm -f ${_N[@]:$((_ROTATE-1)) }
+  N=( $(ls -1 -r $FILE*.gz &>/dev/null || echo '') ) 
+  [[ ${#N[@]} -gt $((ROTATE-1)) ]] && rm -f ${N[@]:$((ROTATE-1)) }
   ## compress and move
-  gzip -f $_FILE || err 'failed to gzip file'
-  mv $_FILE.gz "$_FILE"_"$_DATE".gz || err 'failed to rename archive'
+  gzip -f $FILE || err 'failed to gzip file'
+  mv $FILE.gz "$FILE""$DATE".gz || err 'failed to rename archive'
 done
 
 exit 0

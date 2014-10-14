@@ -1,5 +1,1 @@
-1 6 * * *	  /sbin/logrotate /www/log/access.log \
-                            /www/log/error.log \
-                            /www/log/post.log \
-                            /www/log/admin.log; \
-                            /etc/init.d/lighttpd restart
+1 6 * * *	  /sbin/logrotate /www/log/*.log; /etc/init.d/lighttpd reload
