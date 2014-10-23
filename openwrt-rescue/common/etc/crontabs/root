@@ -1,0 +1,1 @@
+1 6 * * *	  /sbin/logrotate /www/log/*.log; /etc/init.d/lighttpd reload

@@ -1,0 +1,51 @@
+#!/bin/bash
+
+function err {
+  printf %s": "%s"\n" "$(basename $0)" "$1"
+  exit 1
+}
+
+## some Superglue special checks
+## USB drive should be already mounted here
+_WWW="/www"
+
+## try to mount 30 times with 2 second breaks
+while ! mountpoint -q $_WWW; do [[ $n -gt 30 ]] && err 'failed to mount /www..';
+  sleep 2
+  block mount &>/dev/null
+  let n++
+done
+
+## if /www is mounted, then..
+_HTDOCS="$_WWW/htdocs"
+
+## make ./htdocs if there is none
+[[ -e $_HTDOCS ]] || { mkdir $_HTDOCS; let E++; }
+## if not writable chown with httpd
+[[ $(stat $_HTDOCS -c %U) == 'httpd' ]] || { chown -R httpd $_HTDOCS; let E++; }
+[[ ! $(stat $_HTDOCS -c %a) -lt '755' ]] || { chmod -R u+rwX $_HTDOCS; let E++; }
+
+## check if index.html is present
+[[ -e $_HTDOCS/index.html ]] || (
+  cp /opt/lib/resources/demo.html $_HTDOCS/default.html
+  chown httpd $_HTDOCS/default.html 
+  )
+
+## check for log directory
+[[ -e $_WWW/log ]] || { 
+  mkdir $_WWW/log;
+  chown httpd $_WWW/log;
+  let E++; }
+
+## check for tmp directory
+[[ -e $_WWW/tmp ]] || { 
+  mkdir $_WWW/tmp;
+  chown httpd $_WWW/tmp;
+  let E++; }
+
+## if any of the above triggered reload lighttpd
+[[ -z $E ]] || (
+  echo 'reloading lighttpd'
+  /etc/init.d/lighttpd reload
+  )
+

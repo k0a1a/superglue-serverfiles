@@ -8,7 +8,7 @@
  version %VERSION% - based on OpenWRT %REVISION%
  -----------------------------------------------------
  provides now:            will provide:
-   * HTTP (lighttpd)        * SMTP      
-   * Bash CGI               * IMAP
-                            * Lua CGI
+   * Lighttpd               * Btrfs
+   * Bash CGI               * Lua CGI
+   * SSH tunnels            * OpenVPN      
  -----------------------------------------------------

@@ -1,0 +1,122 @@
+html {
+  width: 1000px;
+} 
+body { 
+  background:#ccc;
+  color:#0c0c0c;
+  margin: 20px 0 0 200px;
+  font-family: TitilliumWeb;
+  font-size: 100%;
+}
+
+input, select {
+  font-family: sans-serif;
+  font-size: 100%; 
+  color: #111;
+  display: block;
+  font-family: sans-serif;
+  font-size: 100%; 
+  width: 200px;
+  padding: 5px;
+  margin: 5px 5px 0 0;
+  border: 1px solid #666;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box; 
+  background: #fcfcfc;
+}
+
+input {
+  text-indent: 4px;
+  background: #fcfcfc;
+}
+
+input[type='submit'] {
+  padding-right: 8px;
+  width: inherit;
+  font-size: 100%;
+  cursor: pointer;
+}
+
+input[type='button'],
+input[type='submit'],
+input[type='reset'],
+input[type='file']::-webkit-file-upload-button,
+button {
+  cursor: pointer;
+}
+
+div#uploadbox {
+  position: relative;
+  height: 38px;
+}
+
+input#uploadbtn,
+input#uploadfile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 33px;
+  cursor: pointer;
+  width: auto;
+}
+
+input#uploadbtn {
+  opacity: 0;
+}
+
+/*
+input[type='file'] {
+  padding-right: 8px;
+  width: 400px;
+  font-size: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  filter: alpha(opacity=0);
+} */
+
+
+img.logo {
+  position: absolute;
+  left:50px;
+  top: 20px;
+}
+hr {
+  border: 0;
+  height: 1px;
+  background: #aaa 
+}
+pre {
+  white-space: pre-wrap;
+}
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0; 
+}
+.inline {
+  display: inline;
+}
+.hide {
+  visibility: hidden;
+  display: none;
+}
+.show {
+  visibility: visible;
+  display: inline-block;
+}
+
+@font-face {
+  font-family: TitilliumWeb;
+  src: url('/resources/fonts/Titillium_Web/TitilliumWeb-Regular.ttf') format('truetype');
+}
+@font-face { 
+  font-family: TitilliumWeb; 
+  font-weight: bold;
+  src: url('/resources/fonts/Titillium_Web/TitilliumWeb-Bold.ttf') format('truetype'); }
+
