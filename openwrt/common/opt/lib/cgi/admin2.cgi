@@ -37,16 +37,46 @@ headerPrint() {
   printf '%b' 'Content-Type: text/html\r\n\r\n';
 }
 
+## faster echo
+_echo() {
+  printf "%s" "${*}"
+}
+
 htDigest() {
   _USER='admin'
   _PWD=$1
   _REALM='superglue'
   _HASH=$(echo -n "$_USER:$_REALM:$_PWD" | md5sum | cut -b -32)
-  echo -n "$_USER:$_REALM:$_HASH"
+  printf "%s" "$_USER:$_REALM:$_HASH"
+}
+
+urlDec() {
+  local value=${*//+/%20}
+  for part in ${value//%/ \\x}; do
+    printf "%b%s" "${part:0:4}" "${part:4}"
+  done
 }
 
 setQueryVars() {
-  env
+  _VARS=( ${!POST_*} )
+#  local v
+#  for v in ${_VARS[@]}; do
+  #  echo $v
+#    v=$(urlDec "${v}")
+#    eval "_${v//POST_/}=${!v}"; 
+#  done
+  local v
+  for v in ${_VARS[@]}; do
+    logThis "$v=${!v}"
+  done
+  #echo $POST_lanssid
+  #env
+}
+
+runSuid() {
+  local _SID=$(/usr/bin/ps -p $$ -o sid=)  ## pass session id to the child
+  local _CMD=$@
+  sudo ./suid.sh $_CMD $_SID 2>/dev/null
 }
 
 getQueryFile() {
@@ -73,18 +103,18 @@ validIp() {
 }
 
 pwdChange() {
-  if [[ ! -z "${_pwd##$_pwdd}" ]]; then 
+  if [[ ! -z "${POST_pwd##$POST_pwdd}" ]]; then 
     _ERR=1
     showMesg 'Passwords did not match'
   fi
 
-  if [[ ${#_pwd} -lt 6 ]]; then
+  if [[ ${#POST_pwd} -lt 6 ]]; then
     _ERR=1
     showMesg 'Password must be at least 6 characters long'
   fi
 
-  runSuid "echo -e \"$_pwd\n$_pwd\" | passwd root"
-  runSuid "echo $(htDigest $_pwd) > $_PWDFILE"
+  runSuid "echo -e \"$POST_pwd\n$POST_pwd\" | passwd root"
+  runSuid "echo $(htDigest $POST_pwd) > $_PWDFILE"
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
     showMesg 'Password change failed'
@@ -94,9 +124,9 @@ pwdChange() {
 }
 
 lanAddr() {
-  logThis "new LAN addr is: $_laddr"
-  validIp $_laddr || showMesg 'Not valid network address'
-  doUci set laddr $_laddr
+  logThis "new LAN addr is: $POST_laddr"
+  validIp $POST_laddr || showMesg 'Not valid network address'
+  doUci set laddr $POST_laddr
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
     showMesg 'Setting network address failed'
@@ -107,7 +137,7 @@ lanAddr() {
 }
 
 wanSet() {
-  if [[ ! -z $_wanifname ]]; then
+  if [[ ! -z $POST_wanifname ]]; then
     ## eth and wlan wan cases are different!
     ## eth wan requires:
     ##   config interface 'wan'
@@ -126,23 +156,23 @@ wanSet() {
     ##    config wifi-iface 
     ##      option device 'radio0'
     ##      option network 'wan'
-    logThis "wan.ifname=$_wanifname"
-    if [[ $_wanifname == 'eth0' ]]; then
-      doUci set wanifname $_wanifname
+    logThis "wan.ifname=$POST_wanifname"
+    if [[ $POST_wanifname == 'eth0' ]]; then
+      doUci set wanifname $POST_wanifname
       doUci set wanwifacedis '1'
-    elif [[ $_wanifname == 'wlan1' ]]; then
+    elif [[ $POST_wanifname == 'wlan1' ]]; then
       doUci set wanifname ''
       doUci set wanwifacedis ''
     fi
-    if [[ $_wanproto == 'dhcp' ]]; then
+    if [[ $POST_wanproto == 'dhcp' ]]; then
       doUci set wanproto dhcp
-    elif [[ $_wanproto == 'static' ]]; then
-      logThis "wan.ipaddr=$_wanipaddr"
+    elif [[ $POST_wanproto == 'static' ]]; then
+      logThis "wan.ipaddr=$POST_wanipaddr"
       doUci set wanproto static
-      doUci set wanipaddr $_wanipaddr
-      doUci set wannetmask $_wannetmask
+      doUci set wanipaddr $POST_wanipaddr
+      doUci set wannetmask $POST_wannetmask
     fi
-    if [[ $_wanifname == 'wlan1' ]]; then
+    if [[ $POST_wanifname == 'wlan1' ]]; then
       ssidChange || showMesg 'Wireless changes failed'
     fi
     ## background the following
@@ -150,30 +180,30 @@ wanSet() {
     showMesg 'Internet connection is configured' 'Waiting for device to get ready' ||
     showMesg 'Configuring Internet connection failed'
   fi
-  logThis "new WAN iface is: $_wanifname"
+  logThis "new WAN iface is: $POST_wanifname"
 }
 
 ssidChange() {
   ## check for iface
-  [[ ! $_iface =~ ^('wan'|'lan')$ ]] && showMesg 'Error changing wireless settings' 'unknown/unconfigured interface'
-  logThis "$_iface is being set"
+  [[ ! $POST_iface =~ ^('wan'|'lan')$ ]] && showMesg 'Error changing wireless settings' 'unknown/unconfigured interface'
+  logThis "$POST_iface is being set"
 
-  _p=$_iface
+  _p=$POST_iface
 
   ## default enc for now
   local _enc='psk2'
-  if [[ $_iface == 'wan' ]]; then
+  if [[ $POST_iface == 'wan' ]]; then
     local _mode='sta'
-    local _ssid="${_wanssid}"
-    local _key="${_wankey}"
+    local _ssid="${POST_wanssid}"
+    local _key="${POST_wankey}"
   else 
     local _mode='ap'
-    local _ssid="${_lanssid}"
-    local _key="${_lankey}"
+    local _ssid="${POST_lanssid}"
+    local _key="${POST_lankey}"
   fi
 
   logThis "ssid: $_ssid [$_mode], key: $_key [$_enc]"
-  logThis $_wanssid
+  logThis $POST_wanssid
 
   if [[ ${#_ssid} -lt 4 ]]; then
    _ERR=1
@@ -221,14 +251,23 @@ showMesg() {
     headerPrint 200
   fi
   htmlHead "<meta http-equiv='refresh' content='3;url=${HTTP_REFERER}'>"
-  echo "<body>
-<h1>SG</h1>
-<hr>
-<h2 style='display:inline'>$_TYPE $_MSG</h2>
-<span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>
-<hr>
-</body></html>"
+  _echo "<body>
+  <h1>Superglue server control panel</h1>
+  <img src='http://"${HTTP_HOST}"/resources/img/superglueLogo.png' class='logo'>"
+  _echo "<hr>
+  <h2 style='display:inline'>$_TYPE $_MSG</h2>
+  <span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>
+  <hr>"
+  footerBody
   exit 0
+#  _echo "<body>
+#<h1>SG</h1>
+#<hr>
+#<h2 style='display:inline'>$_TYPE $_MSG</h2>
+#<span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>
+#<hr>
+#</body></html>"
+#  exit 0
 }
 
 updateFw() {
@@ -330,20 +369,48 @@ getStat() {
   logThis $IP4
 }
 
+## call with argument to inject additional lines
+## ie: htmlhead "<meta http-equiv='refresh' content='2;URL=http://${HTTP_REFERER}'>"
+
 htmlHead() {
-echo "<!-- obnoxious code below, keep your ports tight -->
+_echo "<!-- obnoxious code below, keep your ports tight -->
 <!doctype html>
 <html>
-<head><title>SuperGlue | Administration</title>
-$@
+<head>
+<link rel='icon' href='http://${HTTP_HOST}/resources/img/favicon.ico' type='image/x-icon'>
+<title>Superglue server | Control panel</title>
 <link rel='stylesheet' type='text/css' href='http://${HTTP_HOST}/resources/admin/admin.css'>
+$@
 </head>"
 }
-%>
 
-<% headerPrint '200' %>
+footerBody() {
+_echo "</body>
+<script type='text/javascript' src='http://${HTTP_HOST}/resources/admin/admin.js'></script>
+</html>"
+}
 
-<%
+if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
+  [[ $CONTENT_LENGTH -gt 0 ]] || err 'content length is zero, 301 back to referer' '301'
+  case "${CONTENT_TYPE^^}" in 
+    APPLICATION/X-WWW-FORM-URLENCODED*) setQueryVars;;
+                  MULTIPART/FORM-DATA*) getQueryFile;;
+                                     *) _ERR=1; _OUT='this is not a post';;
+  esac
+
+  case $REQUEST_URI in
+                *pwdchange) pwdChange;;
+               *ssidchange) ssidChange;;
+                  *lanaddr) lanAddr;;
+                 *updatefw) updateFw;;
+                *rebootnow) rebootNow;;
+                      *wan) wanSet;;
+                         *) logThis 'bad action'; headerPrint 405; 
+                            echo 'no such thing'; exit 1;;
+  esac
+fi
+
+headerPrint '200'
 ## html head
 htmlHead
 
@@ -357,100 +424,124 @@ wannetmask=$(doUci get wannetmask)
 wanssid=$(doUci get wanssid)
 wankey=$(doUci get wankey)
 
-echo "<body>
-<h1>SG</h1>
-<hr>
-<h2 style='display:inline'>Superglue server control panel</h2>
-<span style='display:block;'>System version: $sgver | Device: $devmod | OpenWRT: $openwrt</span>
-<span style='display:block;'>$(uptime)</span>
-<hr>
+ipaddr="$(ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
+%>
 
-Update firmware:
-<form method='post' action='/admin/updatefw' enctype='multipart/form-data'>
-<div id='uploadbox'>
-<input id='uploadfile' placeholder='Choose file' disabled='disabled'>
-<input id='uploadbtn' name='fwupload' type='file'>
-</div>
-<input type='submit' value='Upload'>
-</form>
+<body>
+  <h1>Superglue server control panel</h1>
+  <img src='http://<% _echo "${HTTP_HOST}" %>/resources/img/superglueLogo.png' class='logo'>
 
-<hr>
+<section class='inert'>
+  <span style='display:block;'><% printf "System version: %s | Device: %s | OpenWRT: %s" "$sgver" "$devmod" "$openwrt" %></span>
+  <span style='display:block;'><% uptime %></span>
+</section>
 
-Internet connection:
-<form method='post' action='/admin/wan' name='wan' onchange='formChange();'>
+<section>
+  <h2>Internet connection: <% _echo $ipaddr %></h3>
+  <form method='post' action='/admin/wan' name='wan' id='wanconf'> <!-- onchange='formChange();' -->
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>
   <select name='wanifname' id='wanifname' style='display:block'>
-  <option value='eth0' id='eth' $([[ $wanifname =~ ('eth') ]] && echo 'selected')>Wired (WAN port)</option>
-  <option value='wlan1' id='wlan' $([[ $wanifname =~ ('wlan') ]] && echo 'selected')>Wireless (Wi-Fi)</option>
+  <option value='eth0' id='eth' <% ( [[ $wanifname =~ ('eth') ]] && _echo 'selected' ) %> >Wired (WAN port)</option>
+  <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (Wi-Fi)</option>
   </select>
   <fieldset id='wanwifi' class='hide'>
-  <input type='text' name='wanssid' value='$wanssid'>
-  <input type='password' name='wankey' value='$wankey'>
+  <input type='text' name='wanssid' value='<% _echo $wanssid %>'>
+  <input type='password' name='wankey' value='<% _echo $wankey %>'>
   </fieldset>
+  <span class='help'>help</span>
   </div>
 
   <div style='display:inline-block;'>
   <select name='wanproto' id='wanproto' style='display:block'>
-  <option value='dhcp' name='dhcp' id='dhcp' $([[ $wanproto == 'dhcp' ]] && echo 'selected')>Automatic (DHCP)</option>
-  <option value='stat' name='dhcp' id='stat' $([[ $wanproto == 'static' ]] && echo 'selected')>Manual (Static IP)</option>
+  <option value='dhcp' name='dhcp' id='dhcp' <% ([[ $wanproto == 'dhcp' ]] && _echo 'selected') %>>Automatic (DHCP)</option>
+  <option value='stat' name='dhcp' id='stat' <% ([[ $wanproto == 'static' ]] && _echo 'selected') %>>Manual (Static IP)</option>
   </select>
   <fieldset id='wanaddr' class='hide' >
-  <input type='text' name='wanipaddr' id='wanipaddr' value='$wanipaddr'>
-  <input type='text' name='wangw' id='wannetmask' value='$wannetmask'>
+  <input type='text' name='wanipaddr' id='wanipaddr' value='<% _echo $wanipaddr %>'>
+  <input type='text' name='wangw' id='wannetmask' value='<% _echo $wannetmask %>'>
   </fieldset>
   </div>
   </div>
   <input type='hidden' name='iface' value='wan' class='inline'>
   <input type='submit' value='Apply'>
+  </form>
+  <span class='help'>help</span>
+</section>
 
-</form>
-<hr>
-
-Local wireless network:
+<section>
+<h2>Local wireless network:</h2>
 <form method='post' action='/admin/ssidchange'>
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>
-    <input type='text' name='lanssid' value='$(doUci get lanssid)'>
-    <input type='password' name='lankey' value='$(doUci get lankey)'>
+    <input type='text' name='lanssid' value='<% doUci get lanssid %>'>
+    <input type='password' name='lankey' value='<% doUci get lankey %>'>
   </div>
   <div style='display:inline-block;'>
-    <input type='text' name='lanipaddr' value='$(doUci get lanipaddr)'>
+    <input type='text' name='lanipaddr' value='<% doUci get lanipaddr %>'>
     <input type='hidden' name='iface' value='lan' class='inline'>
   </div>
   </div>
-  <input type='submit' value='Apply'>
-  
+    <input type='submit' value='Apply'>  
 </form>
+  <span class='help'>help</span>
+</section>
 
-<hr>
-
-<form action='/admin/rebootnow' method='post' class='inline'>
-<input type='hidden' name='reboot' value='now' class='inline'>
-<input type='submit' value='Reboot' class='inline'>
+<section>
+<h2>Change password:</h2>
+<form method='post' action='/admin/pwdchange'>
+  <div style='display:inline-flex'>
+  <div style='display:inline-block;'>
+    <input type='text' name='usr' value='admin' readonly>
+  </div>
+  <div style='display:inline-block;'>
+    <input type='password' name='pwd' value=''>
+    <input type='password' name='pwdd' value=''>
+  </div>
+  </div>
+    <input type='submit' value='Apply'>
 </form>
+<span class='help'>help</span>
+</section>
 
-<form action='http://logout@${HTTP_HOST}/admin' method='get' class='inline'>
-<input type='submit' value='Logout' class='inline'>
-</form>
 
+<section>
+  <h2>Update firmware:</h2>
+  <form method='post' action='/admin/updatefw' enctype='multipart/form-data'>
+  <div id='uploadbox'>
+    <input id='uploadfile' placeholder='Choose file' disabled='disabled'>
+    <input id='uploadbtn' name='fwupload' type='file'>
+  </div>
+    <input type='submit' value='Upload'>
+  </form>
+  <span class='help'>help</span>
+</section>
+
+<section>
+  <h2></h2>
+  <form action='/admin/rebootnow' method='post' class='inline'>
+    <input type='hidden' name='reboot' value='now' class='inline'>
+    <input type='submit' value='Reboot' class='inline'>
+  </form>
+
+  <form action='http://logout@<% _echo ${HTTP_HOST} %>/admin' method='get' class='inline'>
+    <input type='submit' value='Logout' class='inline'>
+  </form>
+</section>
+
+<div style='height:200px'></div>
 <hr>
 Memory:
-<pre>$(free)</pre>
+<pre><% free %></pre>
 <hr>
 Storage:
-<pre>$(df -h)</pre>
+<pre><% df -h %></pre>
 <hr>
 Environment:
-<pre>$(env)</pre>
+<pre><% env %></pre>
 <hr>
 
-</body>
-<script type='text/javascript' src='http://${HTTP_HOST}/resources/admin/admin.js'></script>
-
-</html>"
-
-
+<%
+footerBody
+exit 0
 %>
-
-

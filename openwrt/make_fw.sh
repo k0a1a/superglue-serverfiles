@@ -53,6 +53,9 @@ for _TARGET in $_TARGETS; do
   cp -Ra $_COMMON $_TARGET.tmp
   cp -Ra $_TARGET/* $_TARGET.tmp/
 
+  echo 'cleaning temporary files'
+  find . -name '*.swp' -o -name '*.swo' -o -name '*.tmp' -o -name '*.bup' -o -name '*.bak' -exec rm -rf {} \;
+
   sed -e "s/%REVISION%/$_OPENWRT/g" -e "s/%VERSION%/$_VERSION/g" $_COMMON/etc/banner > $_TARGET.tmp/etc/banner
 
   echo $_VERSION > $_TARGET.tmp/etc/superglue_version
@@ -93,10 +96,16 @@ if [[ $_ERR -eq 0 ]]; then
   [[ -e $_BUILDS/latest ]] && touch $_BUILDS/latest || mkdir $_BUILDS/latest 
   for _TARGET in $_TARGETS; do
     [[ -e $_BUILDS/latest/$_TARGET ]] && rm -f $_BUILDS/latest/$_TARGET/* || mkdir $_BUILDS/latest/$_TARGET
-    set -o xtrace
-    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-factory.bin $_BUILDS/latest/$_TARGET/superglue-firmware-latest-$(echo $_TARGET | tr [:upper:] [:lower:])-factory.bin
-    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-sysupgrade.bin $_BUILDS/latest/$_TARGET/superglue-firmware-latest-$(echo $_TARGET | tr [:upper:] [:lower:])-sysupgrade.bin
-    set +o xtrace
+    #set -o xtrace
+    _FACTORY="$_BUILDS"/latest/"$_TARGET"/superglue-firmware-$(echo "$_TARGET" | tr [:upper:] [:lower:])-"${_VERSION}"-factory.bin
+    _SYSUPGRADE=$_BUILDS/latest/"$_TARGET"/superglue-firmware-$(echo "$_TARGET" | tr [:upper:] [:lower:])-"${_VERSION}"-sysupgrade.bin
+
+    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-factory.bin $_FACTORY &&
+      echo -e "$_FACTORY\n"
+    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-sysupgrade.bin $_SYSUPGRADE &&
+      echo -e "$_SYSUPGRADE\n"
+
+    # set +o xtrace
   done
 
 else
