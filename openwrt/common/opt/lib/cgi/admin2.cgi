@@ -277,10 +277,10 @@ updateFw() {
   _OUT="$(/sbin/sysupgrade -T $_FWFILE 2>&1)"
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "$_OUT"
-  _OUT="$(runSuid /sbin/mtd -e firmware -q write $_FWFILE firmware)"
+#  _OUT="$(runSuid /sbin/mtd -e firmware -q write $_FWFILE firmware)"
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
-  runSuid reboot
+#  runSuid reboot
   showMesg 'Firmware update is completed, rebooting..' 'this might take up to 60 seconds'
 }
 
@@ -438,7 +438,7 @@ ipaddr="$(ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
 
 <section>
   <h2>Internet connection: <% _echo $ipaddr %></h3>
-  <form method='post' action='/admin/wan' name='wan' id='wanconf'> <!-- onchange='formChange();' -->
+  <form method='post' action='/admin/wan' name='wan' id='wanconf'>
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>
   <select name='wanifname' id='wanifname' style='display:block'>
