@@ -290,6 +290,19 @@ rebootNow() {
   showMesg 'Rebooting..' 'this might take up to 60 seconds'
 }
 
+upTime() {
+  local _T="$(uptime)"
+  _ERR=$?
+  if [[ $_ERR -gt 0 ]]; then
+    headerPrint 406
+    exit 1
+  else
+    headerPrint 200
+    printf '%b' "$_T\n"
+    exit 0
+  fi
+}
+
 doUci() {
   local _CMD=''
   local _ARG=''
@@ -345,7 +358,7 @@ doUci() {
       runSuid /sbin/wifi || echo 'wifi: error'
     fi
     if [[ "$_ARG" == 'network' ]]; then
-      runSuid /etc/init.d/dnsmasq restart && runSuid /etc/init.d/network restart || echo 'network: error'
+      runSuid /etc/init.d/dnsmasq reload && runSuid /etc/init.d/network reload || echo 'network: error'
     fi
   fi
 }
@@ -405,6 +418,7 @@ if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
                  *updatefw) updateFw;;
                 *rebootnow) rebootNow;;
                       *wan) wanSet;;
+                   *uptime) upTime;;
                          *) logThis 'bad action'; headerPrint 405; 
                             echo 'no such thing'; exit 1;;
   esac
@@ -424,7 +438,9 @@ wannetmask=$(doUci get wannetmask)
 wanssid=$(doUci get wanssid)
 wankey=$(doUci get wankey)
 
-ipaddr="$(ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
+wanifname='eth0'
+
+ipaddr="$(runSuid ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
 %>
 
 <body>
@@ -433,7 +449,7 @@ ipaddr="$(ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
 
 <section class='inert'>
   <span style='display:block;'><% printf "System version: %s | Device: %s | OpenWRT: %s" "$sgver" "$devmod" "$openwrt" %></span>
-  <span style='display:block;'><% uptime %></span>
+  <span style='display:block;' id='uptime'><% uptime %></span>
 </section>
 
 <section>
@@ -445,7 +461,7 @@ ipaddr="$(ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
   <option value='eth0' id='eth' <% ( [[ $wanifname =~ ('eth') ]] && _echo 'selected' ) %> >Wired (WAN port)</option>
   <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (Wi-Fi)</option>
   </select>
-  <fieldset id='wanwifi' class='hide'>
+  <fieldset id='wanwifi' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
   <input type='text' name='wanssid' value='<% _echo $wanssid %>'>
   <input type='password' name='wankey' value='<% _echo $wankey %>'>
   </fieldset>
@@ -457,7 +473,7 @@ ipaddr="$(ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
   <option value='dhcp' name='dhcp' id='dhcp' <% ([[ $wanproto == 'dhcp' ]] && _echo 'selected') %>>Automatic (DHCP)</option>
   <option value='stat' name='dhcp' id='stat' <% ([[ $wanproto == 'static' ]] && _echo 'selected') %>>Manual (Static IP)</option>
   </select>
-  <fieldset id='wanaddr' class='hide' >
+  <fieldset id='wanaddr' <% ( [[ $wanproto =~ ('static') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
   <input type='text' name='wanipaddr' id='wanipaddr' value='<% _echo $wanipaddr %>'>
   <input type='text' name='wangw' id='wannetmask' value='<% _echo $wannetmask %>'>
   </fieldset>
