@@ -363,24 +363,7 @@ doUci() {
   fi
 }
 
-getStat() {
-  . /usr/share/libubox/jshn.sh
-  local _IFACE=$1
-  local _IFSTAT=$(runSuid ubus call network.interface.wan status 2>/dev/null)
-  logThis "$_IFSTAT"
-  json_get_type _IFSTAT ipv4_address
-  if json_get_type _IFSTAT ipv4_address && [[ "$_IFSTAT" == 'array' ]]; then
-    json_select ipv4_address
-    json_get_type _IFSTAT 1
-    if [[ "$_IFSTAT" == 'object' ]]; then
-      json_select 1
-      json_get_var IP4 address
-      json_get_var Subnet4 mask
-      [[ "$IP4" != '' ]] && [[ "$Subnet4" != '' ]] && IP4="$IP4/$Subnet4"
-    fi
-  fi
-  logThis $IP4
-}
+. /opt/lib/scripts/jshn-helper.sh
 
 ## call with argument to inject additional lines
 ## ie: htmlhead "<meta http-equiv='refresh' content='2;URL=http://${HTTP_REFERER}'>"
@@ -419,6 +402,7 @@ if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
                 *rebootnow) rebootNow;;
                       *wan) wanSet;;
                    *uptime) upTime;;
+                   *iwscan) iwScan;;
                          *) logThis 'bad action'; headerPrint 405; 
                             echo 'no such thing'; exit 1;;
   esac
@@ -431,16 +415,23 @@ htmlHead
 sgver=$(cat /etc/superglue_version)
 devmod=$(cat /etc/superglue_model)
 openwrt=$(cat /etc/openwrt_version)
-wanifname=$(doUci get wanifname || echo 'wlan0') ## TODO fix this
+
+IFS=","
+wan=( $(ifaceStat wan) )
+IFS=$OFS
+
+#wanifname=$(doUci get wanifname || echo 'wlan0') ## TODO fix this
+wanifname=${wan[3]}
 wanproto=$(doUci get wanproto)
-wanipaddr=$(doUci get wanipaddr) 
-wannetmask=$(doUci get wannetmask)
+#wanipaddr=$(doUci get wanipaddr) 
+wanipaddr=${wan[0]}
+#wannetmask=$(doUci get wannetmask)
+wangw=${wan[2]}
+wandns=${wan[5]}
+wanuptime=${wan[4]}
 wanssid=$(doUci get wanssid)
 wankey=$(doUci get wankey)
 
-wanifname='eth0'
-
-ipaddr="$(runSuid ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
 %>
 
 <body>
@@ -453,7 +444,7 @@ ipaddr="$(runSuid ifconfig $wanifname | sed -n '/dr:/{;s/.*dr://;s/ .*//;p;}')"
 </section>
 
 <section>
-  <h2>Internet connection: <% _echo $ipaddr %></h3>
+  <h2>Internet connection: <% _echo "IP:$wanipaddr, Gateway:$wangw, DNS:$wandns, up for $wanuptime seconds" %></h3>
   <form method='post' action='/admin/wan' name='wan' id='wanconf'>
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>

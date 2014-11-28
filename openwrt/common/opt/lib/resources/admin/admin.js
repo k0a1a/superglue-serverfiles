@@ -57,12 +57,10 @@ function wanChange(e) {
 
 function ajaxReq(url, method, data, callback) {
   var xmlDoc = new XMLHttpRequest();
-
   xmlDoc.open(url, method, true);
   if (method == 'POST') {
     xmlDoc.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   }
-
   xmlDoc.onreadystatechange = function() {
     if (xmlDoc.readyState === 4 && xmlDoc.status === 200) {
       callback(xmlDoc);
