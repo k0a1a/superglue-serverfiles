@@ -2,6 +2,17 @@
 <%# upload limit: 32Mb %>
 <%
 
+## SuperGlue project | http://superglue.it | 2014 | GPLv3
+## http://git.superglue.it/superglue/serverfiles
+##
+## admin2.cgi - control panel for Superglue personal server
+## 
+## example POST request:
+## curl --data-urlencode 'key=value' http://host/uri
+##
+## returns: 200 (+ output of operation) on success
+##          406 (+ error message in debug mode) on error
+
 _WWW='/www'
 _PWDFILE="/opt/lib/htpasswd"
 _TMP="${_WWW}/tmp"
@@ -203,7 +214,7 @@ ssidChange() {
   fi
 
   logThis "ssid: $_ssid [$_mode], key: $_key [$_enc]"
-  logThis $POST_wanssid
+  #logThis $POST_wanssid
 
   if [[ ${#_ssid} -lt 4 ]]; then
    _ERR=1
@@ -301,6 +312,13 @@ upTime() {
     printf '%b' "$_T\n"
     exit 0
   fi
+}
+
+iwScan() {
+  . /opt/lib/scripts/iw-scan.sh
+  headerPrint 200
+  iwScanJ
+  exit 0
 }
 
 doUci() {
@@ -432,6 +450,8 @@ wanuptime=${wan[4]}
 wanssid=$(doUci get wanssid)
 wankey=$(doUci get wankey)
 
+
+logThis $wanifname
 %>
 
 <body>
@@ -453,9 +473,18 @@ wankey=$(doUci get wankey)
   <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (Wi-Fi)</option>
   </select>
   <fieldset id='wanwifi' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
-  <input type='text' name='wanssid' value='<% _echo $wanssid %>'>
+    
+  <select name='wanssid' id='wanssid' style='display:block'>
+  <% if [[ -z $wanssid ]]; then
+    _echo '<option disabled>choose network..</option>'
+  else
+    _echo "<option id=$wanssid selected>$wanssid</option>"
+  fi %>
+  </select>
   <input type='password' name='wankey' value='<% _echo $wankey %>'>
+
   </fieldset>
+
   <span class='help'>help</span>
   </div>
 
