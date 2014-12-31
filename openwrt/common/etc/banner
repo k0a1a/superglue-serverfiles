@@ -7,8 +7,8 @@
  -----------------------------------------------------
  version %VERSION% - based on OpenWRT %REVISION%
  -----------------------------------------------------
- provides now:            will provide:
+ provides:
    * Lighttpd               * Btrfs
    * Bash CGI               * Lua CGI
-   * SSH tunnels            * OpenVPN      
+   * SSH tunnels            * OpenVPN (not yet)
  -----------------------------------------------------
