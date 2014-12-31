@@ -10,18 +10,10 @@ config 'global' 'automount'
   option  'from_fstab'  '1' 
   option  'anon_mount'  '0' 
 
-## btrfs is not picked up here
+## btrfs is not picked up here, see /opt/lib/scripts/sg-data-mount.sh
 config 'mount'
-  option 'label'        'sg'
+  option 'label'        'sg-data'
   option 'target'       '/www'
   option 'enabled'      '1' 
   option 'enabled_fsck' '0' 
-  option 'options'      'rw,noatime,nodiratime'
-
-## compatibility
-#config 'mount'
-#  option 'label'       'SUPERGLUE'
-#  option 'target'       '/mnt/sg'
-#  option 'enabled'      '1' 
-#  option 'enabled_fsck' '0' 
-#  option 'options'      'rw,noatime,nodiratime'
+  option 'options'      'rw,noatime,nodiratime,sync'

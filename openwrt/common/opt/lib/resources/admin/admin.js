@@ -32,20 +32,25 @@ function wanChange(e) {
       iwScan();
       break;
     case 'dhcp':
-      wanaddr.setAttribute('class','hide');
+    //  wanaddr.setAttribute('class','hide');
+      for (var i = 0; i < wanaddr.children.length; i++) {
+        wanaddr.children[i].setAttribute('readonly', true);
+      }
       break;
     case 'eth':
       wanwifi.setAttribute('class','hide');
       break
     case 'stat':
-      wanaddr.setAttribute('class','show');
+    //  wanaddr.setAttribute('class','show');
+      for (var i = 0; i < wanaddr.children.length; i++) {
+        wanaddr.children[i].removeAttribute('readonly');
+}
       break;
   }
 }
 
 var wanssid = document.getElementById('wanssid');
 wanssid.addEventListener('focus', function(event) { 
-  console.log('scan now');
   iwScan();
   event.stopPropagation();
 });
@@ -77,7 +82,6 @@ function iwScan() {
   ajaxReq('POST', '/admin/iwscan', 'null', function(xmlDoc) {
     var res = JSON.parse(xmlDoc['response']);
     var stas = res['results'].sort(comp);
-    sss = stas;
     var wanssid = document.getElementById('wanssid');
     for (var i = 0; i < Object.keys(stas).length; i++) { 
 //      console.log(stas[i]['ssid']);
@@ -116,27 +120,3 @@ function ajaxReq(url, method, data, callback) {
   xmlDoc.send(data);
 }
 
-/*
-function formChange() {
-  if (document.activeElement.tagName.toLowerCase() !=  'select') {
-    console.log('not select');
-    return false;
-  }
-  aElem = document.activeElement;
-  aParent = aElem.parentElement;
-  sOpt = aElem[aElem.selectedIndex];
-  console.log(aElem.id + sOpt.id);
-  if (aElem.id + sOpt.id == 'wanprotostat') {
-    document.getElementById('wanaddr').setAttribute('class','show');
-  }
-  if (aElem.id + sOpt.id == 'wanprotodhcp') {
-    document.getElementById('wanaddr').setAttribute('class','hide');
-  }
-  if (aElem.id + sOpt.id == 'wanifnamewlan') {
-    document.getElementById('wanwifi').setAttribute('class','show');
-  }
-  if (aElem.id + sOpt.id == 'wanifnameeth') {
-    document.getElementById('wanwifi').setAttribute('class','hide');
-  }
-};
-*/

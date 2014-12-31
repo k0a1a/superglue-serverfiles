@@ -13,17 +13,18 @@
 ## returns: 200 (+ output of operation) on success
 ##          406 (+ error message in debug mode) on error
 
-_WWW='/www'
-_PWDFILE="/opt/lib/htpasswd"
-_TMP="${_WWW}/tmp"
-_LOG="${_WWW}/log/admin.log"
-_DEBUG=1
+readonly _WWW='/www'
+readonly _PWDFILE="/opt/lib/htpasswd"
+readonly _TMP="${_WWW}/tmp"
+readonly _LOG="${_WWW}/log/admin.log"
+readonly _DEBUG=1
+readonly _IFS=$IFS
 
 err() {
   _ERR="$?"
   [[ "$_ERR" -gt 0 ]] || return 0
-  log "$1"
-  head "${2:='400'}"
+  logThis "$1"
+  headerPrint "${2:='400'}"
   exit "$_ERR"
 } 
 
@@ -87,7 +88,7 @@ setQueryVars() {
 runSuid() {
   local _SID=$(/usr/bin/ps -p $$ -o sid=)  ## pass session id to the child
   local _CMD=$@
-  sudo ./suid.sh $_CMD $_SID 2>/dev/null
+  /usr/bin/sudo ./suid.sh $_CMD $_SID 2>/dev/null
 }
 
 getQueryFile() {
@@ -295,6 +296,14 @@ updateFw() {
   showMesg 'Firmware update is completed, rebooting..' 'this might take up to 60 seconds'
 }
 
+usbInit() {
+  _OUT="$(runSuid /opt/lib/scripts/usb-part.sh)"
+  _ERR=$?
+  [[ $_ERR -gt 0 ]] && showMesg "usb init failed, $_OUT"
+  showMesg 'USB storage initialization is completed'
+#  logThis 'usb init..'
+}
+
 rebootNow() {
   logThis "reboot: now!"
   runSuid reboot
@@ -319,6 +328,41 @@ iwScan() {
   headerPrint 200
   iwScanJ
   exit 0
+}
+
+findUsbstor() {
+  local _P='/sys/block/'
+  local _D _DEV
+  for _D in ${_P}sd*; do
+    _DEV=$(readlink -f ${_D}/device)
+    if [[ ${_DEV/usb} != $_DEV ]]; then
+      _USBDEV="/dev/${_D/$_P}"
+    fi
+  done
+  [[ $_USBDEV ]] || return 1
+}
+
+storageInfo() {
+  if mountpoint -q $_WWW; then
+    IFS=$'\n' _STOR=( $(df -h $_WWW) ) IFS=$_IFS
+    _STOR=( ${_STOR[1]} )
+  else
+    return 1
+  fi
+}
+
+swapInfo() {
+  IFS=$'\n' _SWAP=( $(runSuid swapon -s) ) IFS=$_IFS
+  if [[ ${_SWAP[1]} ]]; then
+    IFS=$'\t' _SWAP=( ${_SWAP[1]} ) IFS=$_IFS
+    ## for the lack of floats add trailing 0
+    ## divide by 1023 and split last digit by a period
+    _SWAP[1]="$((${_SWAP[1]}0/1023))"
+    _SWAP[1]="${_SWAP[1]%?}.${_SWAP[1]/??}M"
+  else
+    unset _SWAP
+    return 1
+  fi
 }
 
 doUci() {
@@ -381,7 +425,6 @@ doUci() {
   fi
 }
 
-. /opt/lib/scripts/jshn-helper.sh
 
 ## call with argument to inject additional lines
 ## ie: htmlhead "<meta http-equiv='refresh' content='2;URL=http://${HTTP_REFERER}'>"
@@ -417,6 +460,7 @@ if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
                *ssidchange) ssidChange;;
                   *lanaddr) lanAddr;;
                  *updatefw) updateFw;;
+                  *usbinit) usbInit;;
                 *rebootnow) rebootNow;;
                       *wan) wanSet;;
                    *uptime) upTime;;
@@ -427,31 +471,28 @@ if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
 fi
 
 headerPrint '200'
-## html head
 htmlHead
 
-sgver=$(cat /etc/superglue_version)
-devmod=$(cat /etc/superglue_model)
-openwrt=$(cat /etc/openwrt_version)
+read sgver < /etc/superglue_version
+read devmod < /etc/superglue_model
+read openwrt < /etc/openwrt_version
+
+. /opt/lib/scripts/jshn-helper.sh
 
 IFS=","
 wan=( $(ifaceStat wan) )
 IFS=$OFS
 
-#wanifname=$(doUci get wanifname || echo 'wlan0') ## TODO fix this
 wanifname=${wan[3]}
 wanproto=$(doUci get wanproto)
-#wanipaddr=$(doUci get wanipaddr) 
 wanipaddr=${wan[0]}
-#wannetmask=$(doUci get wannetmask)
 wangw=${wan[2]}
 wandns=${wan[5]}
 wanuptime=${wan[4]}
 wanssid=$(doUci get wanssid)
 wankey=$(doUci get wankey)
 
-
-logThis $wanifname
+#logThis $stor
 %>
 
 <body>
@@ -464,7 +505,7 @@ logThis $wanifname
 </section>
 
 <section>
-  <h2>Internet connection: <% _echo "IP:$wanipaddr, Gateway:$wangw, DNS:$wandns, up for $wanuptime seconds" %></h3>
+  <h2>Internet connection:</h2>
   <form method='post' action='/admin/wan' name='wan' id='wanconf'>
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>
@@ -481,7 +522,7 @@ logThis $wanifname
     _echo "<option id=$wanssid selected>$wanssid</option>"
   fi %>
   </select>
-  <input type='password' name='wankey' value='<% _echo $wankey %>'>
+  <input type='password' name='wankey' placeholder='passphrase' value='<% _echo $wankey %>'>
 
   </fieldset>
 
@@ -493,9 +534,10 @@ logThis $wanifname
   <option value='dhcp' name='dhcp' id='dhcp' <% ([[ $wanproto == 'dhcp' ]] && _echo 'selected') %>>Automatic (DHCP)</option>
   <option value='stat' name='dhcp' id='stat' <% ([[ $wanproto == 'static' ]] && _echo 'selected') %>>Manual (Static IP)</option>
   </select>
-  <fieldset id='wanaddr' <% ( [[ $wanproto =~ ('static') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
-  <input type='text' name='wanipaddr' id='wanipaddr' value='<% _echo $wanipaddr %>'>
-  <input type='text' name='wangw' id='wannetmask' value='<% _echo $wannetmask %>'>
+  <fieldset id='wanaddr' >
+  <input type='text' name='wanipaddr' id='wanipaddr' value='<% _echo $wanipaddr %>' <% ( [[ $wanproto =~ ('dhcp') ]] && _echo "readonly" ) %> placeholder='ip address'>
+  <input type='text' name='wangw' id='wangw' value='<% _echo $wangw %>' <% ( [[ $wanproto =~ ('dhcp') ]] && _echo "readonly" ) %> placeholder='gateway/router'>
+  <input type='text' name='wandns' id='wandns' value='<% _echo $wandns %>' <% ( [[ $wanproto =~ ('dhcp') ]] && _echo "readonly" ) %> placeholder='dns server'>
   </fieldset>
   </div>
   </div>
@@ -503,6 +545,14 @@ logThis $wanifname
   <input type='submit' value='Apply'>
   </form>
   <span class='help'>help</span>
+</section>
+
+<section>
+  <h2>Domain name:</h2>
+  <input type='text' name='dnsname' id='dnsname' value='<% _echo $dnsname %>' placeholder='domain name'>
+  <input type='text' name='dnstoken' id='dnstoken' value='<% _echo $dnstoken %>' placeholder='dns token'>
+ 
+ <span class='help'>help</span>
 </section>
 
 <section>
@@ -515,12 +565,36 @@ logThis $wanifname
   </div>
   <div style='display:inline-block;'>
     <input type='text' name='lanipaddr' value='<% doUci get lanipaddr %>'>
-    <input type='hidden' name='iface' value='lan' class='inline'>
+    <input type='hidden' name='iface' value='lan'>
   </div>
   </div>
     <input type='submit' value='Apply'>  
 </form>
   <span class='help'>help</span>
+</section>
+
+<section>
+<h2>Storage:</h2>
+<% if findUsbstor; then %>
+
+  <% if storageInfo; then %>
+    <div>File storage: <% _echo "${_STOR[2]} used, ${_STOR[3]} available" %></div>
+    <div>Swap: <% swapInfo && _echo "${_SWAP[1]}" || _echo '<b>n/a</b>' %></div>
+  <% else %>
+    <div>USB storage device must be initialized</div>
+    <form method='post' action='/admin/usbinit'>
+    <input type='hidden' name='dev' value='<% _echo $_USBDEV %>'>
+    <input type='submit' value='Initialize'>
+    </form>
+  <% fi %>
+
+<% else %>
+
+  <div><h3>USB storage device not found!</h3>Please check and try again</div>
+
+<% fi %>
+
+<span class='help'>help</span>
 </section>
 
 <section>
@@ -531,8 +605,8 @@ logThis $wanifname
     <input type='text' name='usr' value='admin' readonly>
   </div>
   <div style='display:inline-block;'>
-    <input type='password' name='pwd' value=''>
-    <input type='password' name='pwdd' value=''>
+    <input type='password' name='pwd' placeholder='password' value=''>
+    <input type='password' name='pwdd' placeholder='password again' value=''>
   </div>
   </div>
     <input type='submit' value='Apply'>

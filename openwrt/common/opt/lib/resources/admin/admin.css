@@ -200,4 +200,10 @@ span.help:active::after
   display: inline-block;
 }
 
+/* .grey {
+  background-color: #ddd;
+} */
 
+input:read-only { 
+    background-color: #ddd;
+}
