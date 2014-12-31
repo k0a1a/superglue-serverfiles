@@ -549,9 +549,29 @@ wankey=$(doUci get wankey)
 
 <section>
   <h2>Domain name:</h2>
-  <input type='text' name='dnsname' id='dnsname' value='<% _echo $dnsname %>' placeholder='domain name'>
-  <input type='text' name='dnstoken' id='dnstoken' value='<% _echo $dnstoken %>' placeholder='dns token'>
- 
+  <form>
+  <input type='text' name='dnsname' id='dnsname' value='<% _echo $dnsname %>' placeholder='domain name' class='inline'>
+  <input type='text' name='dnstoken' id='dnstoken' value='<% _echo $dnstoken %>' placeholder='dns token' class='inline'>
+  <input type='hidden' name='dns' value='apply' class='inline'>
+  <input type='submit' value='Apply'>
+  </form>
+  <h2>Free DNS:</h2>
+    Register your free domain name (external <a target='_new' href='http://freedns.afraid.org/'>Free DNS</a> service, will open in a new tab)
+    <form target='_new' action='http://freedns.afraid.org/subdomain/edit.php'>
+
+    <input type='text' size='15' name='subdomain' placeholder='yourname' class='inline'>
+    <select name='edit_domain_id' class='inline'>
+    <option value='1035903'>spgl.cc</option>
+    <option value='1035903'>spgl.it</option>
+    <option value='1035903'>superglue.it</option>
+    <option value='0'>Many more available..</option>
+    </select>
+
+    <input type=submit name=submit value="next &gt;&gt;">
+    <input type=hidden name=web_panel value=1>
+    <input type=hidden name=ref value=750930>
+    </form>
+   
  <span class='help'>help</span>
 </section>
 

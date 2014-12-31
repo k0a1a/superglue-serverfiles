@@ -14,8 +14,10 @@ _PWD=$(pwd)
 _IMAGEBUILDER="$_PWD/../../../openwrt/OpenWrt-ImageBuilder-ar71xx_generic-for-linux-x86_64"
 _BUILDS="$_PWD/../../../sg-builds"
 
+set -e
 [[ -e $_IMAGEBUILDER ]] || (echo 'ImageBuilder is missing'; exit 1;)
 [[ -e $_BUILDS ]] || (echo 'Builds directory is missing'; exit 1;)
+set +e
 
 ## dirs with platform specific files
 #_TARGETS='DIR505A1 TLWR710 WRT160NL'
