@@ -178,6 +178,10 @@ wanSet() {
     fi
     if [[ $POST_wanproto == 'dhcp' ]]; then
       doUci set wanproto dhcp
+      doUci set wanipaddr ''
+      doUci set wanmask ''
+      doUci set wangw ''
+      doUci set wandns ''
     elif [[ $POST_wanproto == 'static' ]]; then
       logThis "wan.ipaddr=$POST_wanipaddr"
       doUci set wanproto static
@@ -190,7 +194,7 @@ wanSet() {
       ssidChange || showMesg 'Wireless changes failed'
     fi
     ## background the following
-    doUci commit network &&
+    (doUci commit network && doUci commit wireless)
     showMesg 'Internet connection is being configured' '25' 'initializing - ' ||
     showMesg 'Configuring Internet connection failed'
   fi
@@ -241,7 +245,7 @@ ssidChange() {
     [[ $_ERR -gt 0 ]] && showMesg 'Passphrase is not set'
   fi
   [[ $_ERR -gt 0 ]] && return $_ERR  ##showMesg 'Wireless changes failed'
-  doUci commit wireless && showMesg 'Wireless configuration applied' '10'
+  doUci commit wireless && showMesg 'Wireless configuration applied' '25'
 }
 
 #showError() {
