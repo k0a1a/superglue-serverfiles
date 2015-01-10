@@ -279,7 +279,7 @@ showMesg() {
   <span style='display:block'>$_SUBMSG</span>
   <hr>
   </body>
-  <script type='text/javascript'>(function(e){var t=document.getElementById(e);var n=t.innerHTML;var r=setInterval(function(){if(n==0){t.innerHTML='0';clearInterval(r);return}t.innerHTML=n%60;n--},1e3)})('timeout')
+  <script type='text/javascript'>(function(e){var t=document.getElementById(e);var n=t.innerHTML;var r=setInterval(function(){if(n==0){t.innerHTML='0';clearInterval(r);return}t.innerHTML=n;n--},1e3)})('timeout')
   </script>
   </html>"
 
@@ -301,10 +301,10 @@ updateFw() {
   _OUT="$(/sbin/sysupgrade -T $_FWFILE 2>&1)"
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "$_OUT"
-  _OUT="$(runSuid /sbin/mtd -e firmware -q write $_FWFILE firmware)"
+  _OUT="$(runSuid /sbin/mtd -r -e firmware -q write $_FWFILE firmware)"
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
-  runSuid reboot
+  #runSuid reboot
   showMesg 'Firmware update is completing..' '90' 'Device will be rebooted'
 }
 
