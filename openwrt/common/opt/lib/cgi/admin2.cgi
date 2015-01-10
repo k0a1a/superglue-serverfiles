@@ -136,9 +136,9 @@ pwdChange() {
 }
 
 lanAddr() {
-  logThis "new LAN addr is: $POST_laddr"
-  validIp $POST_laddr || showMesg 'Not valid network address'
-  doUci set laddr $POST_laddr
+  logThis "new LAN addr is: $POST_lanipaddr"
+  validIp $POST_lanipaddr || showMesg 'Not valid network address'
+  doUci set lanipaddr $POST_lanipaddr
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
     showMesg 'Setting network address failed'
@@ -194,7 +194,8 @@ wanSet() {
       ssidChange || showMesg 'Wireless changes failed'
     fi
     ## background the following
-    (doUci commit network && doUci commit wireless)
+    ##(doUci commit network; doUci commit wireless) &&
+    (doUci commit network; doUci commit wireless;) &&
     showMesg 'Internet connection is being configured' '25' 'initializing - ' ||
     showMesg 'Configuring Internet connection failed'
   fi
@@ -220,7 +221,7 @@ ssidChange() {
     local _key="${POST_lankey}"
   fi
 
-  logThis "ssid: $_ssid [$_mode], key: $_key [$_enc]"
+  #logThis "ssid: $_ssid [$_mode], key: $_key [$_enc]"
   #logThis $POST_wanssid
 
   if [[ ${#_ssid} -lt 4 ]]; then
@@ -244,8 +245,12 @@ ssidChange() {
     _ERR=$?
     [[ $_ERR -gt 0 ]] && showMesg 'Passphrase is not set'
   fi
-  [[ $_ERR -gt 0 ]] && return $_ERR  ##showMesg 'Wireless changes failed'
-  doUci commit wireless && showMesg 'Wireless configuration applied' '25'
+  [[ $_ERR -gt 0 ]] && showMesg 'Wireless configuration failed'
+  doUci set lanipaddr ${POST_lanipaddr}
+  _ERR=$?
+  [[ $_ERR -gt 0 ]] && showMesg 'LAN IP configuration failed'
+  (doUci commit network; doUci commit wireless;) &&
+  showMesg 'Local network configuration applied' '25' 'please reconnect to your network - '
 }
 
 #showError() {
@@ -305,7 +310,7 @@ updateFw() {
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
   #runSuid reboot
-  showMesg 'Firmware update is completing..' '90' 'Device will be rebooted'
+  showMesg 'Firmware update is completing..' '90' 'Device will be rebooted -'
 }
 
 usbInit() {
@@ -434,7 +439,8 @@ doUci() {
       runSuid /sbin/wifi || echo 'wifi: error'
     fi
     if [[ "$_ARG" == 'network' ]]; then
-      runSuid /etc/init.d/dnsmasq reload && runSuid /etc/init.d/network reload || echo 'network: error'
+      runSuid "/etc/init.d/dnsmasq reload"
+      runSuid "/etc/init.d/network reload"
     fi
   fi
 }
