@@ -20,7 +20,7 @@ for (i = 0; i < selects.length; i++) {
 */
 
 var wanconf = document.getElementById('wanconf');
-wanconf.addEventListener('change', function(event) { wanChange(event.target) });
+wanconf.addEventListener('change', function(e) { wanChange(e.target) });
 
 function wanChange(e) {
   var wanwifi = document.getElementById('wanwifi');
@@ -50,11 +50,20 @@ function wanChange(e) {
 }
 
 var wanssid = document.getElementById('wanssid');
-wanssid.addEventListener('focus', function(event) { 
+wanssid.addEventListener('focus', function(e) { 
   iwScan();
-  event.stopPropagation();
+  e.stopPropagation();
 });
 
+var submitbtns = document.querySelectorAll('input[type="submit"]');
+for (var i=0; i < submitbtns.length; i++){
+  submitbtns[i].addEventListener('click', function(e) {
+  if (e.target.hasAttribute('data-wait')) {
+    e.target.value = e.target.getAttribute('data-wait');
+  } else e.target.value = 'Working, please wait..';
+  e.stopPropagation();
+  }, false);
+}
 
 /* update uptime output */
 (function uptimeUpdate() {

@@ -96,7 +96,7 @@ getQueryFile() {
   logThis "'multipart': decoding stream"
   mv "$_TMP/$_UPLD" "$_TMP/fwupload.bin" 2>/dev/null || _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
-    showMesg 'Firmware upload has failed' 'Reboot your Superglue server and try again'
+    showMesg 'Firmware upload has failed' '60' 'Reboot your Superglue server and try again'
   fi
 }
 
@@ -144,7 +144,7 @@ lanAddr() {
     showMesg 'Setting network address failed'
   else
     (sleep 1; doUci commit network; doUci commit wireless;)&
-    showMesg 'New network address is set' "Your server is now accessible under <a href='http://superglue.local/admin'>http://superglue.local/admin</a>"
+    showMesg 'New network address is set' '30' "Your server is now accessible under <a href='http://superglue.local/admin'>http://superglue.local/admin</a>"
   fi 
 }
 
@@ -182,14 +182,16 @@ wanSet() {
       logThis "wan.ipaddr=$POST_wanipaddr"
       doUci set wanproto static
       doUci set wanipaddr $POST_wanipaddr
-      doUci set wannetmask $POST_wannetmask
+      doUci set wanmask '255.255.255.0' ## fix me
+      doUci set wangw $POST_wangw
+      doUci set wandns $POST_wandns
     fi
     if [[ $POST_wanifname == 'wlan1' ]]; then
       ssidChange || showMesg 'Wireless changes failed'
     fi
     ## background the following
     doUci commit network &&
-    showMesg 'Internet connection is configured' 'Waiting for device to get ready' ||
+    showMesg 'Internet connection is being configured' '25' 'initializing - ' ||
     showMesg 'Configuring Internet connection failed'
   fi
   logThis "new WAN iface is: $POST_wanifname"
@@ -197,7 +199,7 @@ wanSet() {
 
 ssidChange() {
   ## check for iface
-  [[ ! $POST_iface =~ ^('wan'|'lan')$ ]] && showMesg 'Error changing wireless settings' 'unknown/unconfigured interface'
+  [[ ! $POST_iface =~ ^('wan'|'lan')$ ]] && showMesg 'Error changing wireless settings' '30' 'unknown/unconfigured interface'
   logThis "$POST_iface is being set"
 
   _p=$POST_iface
@@ -239,7 +241,7 @@ ssidChange() {
     [[ $_ERR -gt 0 ]] && showMesg 'Passphrase is not set'
   fi
   [[ $_ERR -gt 0 ]] && return $_ERR  ##showMesg 'Wireless changes failed'
-  doUci commit wireless ##&& showMesg 'Wireless changes applied'
+  doUci commit wireless && showMesg 'Wireless configuration applied' '10'
 }
 
 #showError() {
@@ -252,9 +254,11 @@ ssidChange() {
 showMesg() {
   logThis "$@"
   local _MSG=$1
-  local _SUBMSG=$2
-  _MSG=${_MSG:='Not defined'}
-  _SUBMSG=${_SUBMSG:='back to control panel in a second..'}
+  local _TIMEOUT=$2
+  local _SUBMSG=$3
+  _MSG=${_MSG:='Configuration'}
+  _TIMEOUT=${_TIMEOUT:='5'}
+  _SUBMSG="${_SUBMSG} waiting <span id='timeout'>${_TIMEOUT}</span> seconds to get ready.."
   if [[ $_ERR -gt 0 ]]; then
     local _TYPE='ERROR: '
     headerPrint 406
@@ -262,15 +266,19 @@ showMesg() {
     local _TYPE='OK: '
     headerPrint 200
   fi
-  htmlHead "<meta http-equiv='refresh' content='3;url=${HTTP_REFERER}'>"
+  htmlHead "<meta http-equiv='refresh' content='${_TIMEOUT};url=${HTTP_REFERER}'>"
   _echo "<body>
   <h1>Superglue server control panel</h1>
-  <img src='http://"${HTTP_HOST}"/resources/img/superglueLogo.png' class='logo'>"
-  _echo "<hr>
+  <img src='http://"${HTTP_HOST}"/resources/img/superglueLogo.png' class='logo'>
+  <hr>
   <h2 style='display:inline'>$_TYPE $_MSG</h2>
-  <span style='display:inline; margin-left: 50px;'>$_SUBMSG</span>
-  <hr>"
-  footerBody
+  <span style='display:block'>$_SUBMSG</span>
+  <hr>
+  </body>
+  <script type='text/javascript'>(function(e){var t=document.getElementById(e);var n=t.innerHTML;var r=setInterval(function(){if(n==0){t.innerHTML='0';clearInterval(r);return}t.innerHTML=n%60;n--},1e3)})('timeout')
+  </script>
+  </html>"
+
   exit 0
 #  _echo "<body>
 #<h1>SG</h1>
@@ -293,21 +301,21 @@ updateFw() {
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
   runSuid reboot
-  showMesg 'Firmware update is completed, rebooting..' 'this might take up to 60 seconds'
+  showMesg 'Firmware update is completed, rebooting..' '60'
 }
 
 usbInit() {
   _OUT="$(runSuid /opt/lib/scripts/usb-part.sh)"
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "usb init failed, $_OUT"
-  showMesg 'USB storage initialization is completed'
+  showMesg 'USB storage initialization is completed' '30'
 #  logThis 'usb init..'
 }
 
 rebootNow() {
   logThis "reboot: now!"
   runSuid reboot
-  showMesg 'Rebooting..' 'this might take up to 60 seconds'
+  showMesg 'Rebooting..' '60'
 }
 
 upTime() {
@@ -381,7 +389,9 @@ doUci() {
     wanifname) _ARG='network.wan.ifname';;
     wanproto) _ARG='network.wan.proto';;
     wanipaddr) _ARG='network.wan.ipaddr';;
-    wannetmask) _ARG='network.wan.netmask';;
+    wanmask) _ARG='network.wan.netmask';;
+    wangw) _ARG='network.wan.gateway';;
+    wandns) _ARG='network.wan.dns';;
     wanwifacedis) _ARG='wireless.@wifi-iface[1].disabled';;
     wanssid) _ARG='wireless.@wifi-iface[1].ssid';;
     wanenc) _ARG='wireless.@wifi-iface[1].encryption';;
@@ -532,7 +542,7 @@ wankey=$(doUci get wankey)
   <div style='display:inline-block;'>
   <select name='wanproto' id='wanproto' style='display:block'>
   <option value='dhcp' name='dhcp' id='dhcp' <% ([[ $wanproto == 'dhcp' ]] && _echo 'selected') %>>Automatic (DHCP)</option>
-  <option value='stat' name='dhcp' id='stat' <% ([[ $wanproto == 'static' ]] && _echo 'selected') %>>Manual (Static IP)</option>
+  <option value='static' name='stat' id='stat' <% ([[ $wanproto == 'static' ]] && _echo 'selected') %>>Manual (Static IP)</option>
   </select>
   <fieldset id='wanaddr' >
   <input type='text' name='wanipaddr' id='wanipaddr' value='<% _echo $wanipaddr %>' <% ( [[ $wanproto =~ ('dhcp') ]] && _echo "readonly" ) %> placeholder='ip address'>
@@ -542,7 +552,7 @@ wankey=$(doUci get wankey)
   </div>
   </div>
   <input type='hidden' name='iface' value='wan' class='inline'>
-  <input type='submit' value='Apply'>
+  <input type='submit' id='wansubmit' value='Apply'>
   </form>
   <span class='help'>help</span>
 </section>
@@ -588,7 +598,7 @@ wankey=$(doUci get wankey)
     <input type='hidden' name='iface' value='lan'>
   </div>
   </div>
-    <input type='submit' value='Apply'>  
+    <input type='submit' value='Apply' data-wait='Configuring..'>  
 </form>
   <span class='help'>help</span>
 </section>
