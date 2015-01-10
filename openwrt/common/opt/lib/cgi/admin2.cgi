@@ -305,7 +305,7 @@ updateFw() {
   _ERR=$?
   [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
   runSuid reboot
-  showMesg 'Firmware update is completed, rebooting..' '60'
+  showMesg 'Firmware update is completing..' '90' 'Device will be rebooted'
 }
 
 usbInit() {
@@ -656,7 +656,7 @@ wankey=$(doUci get wankey)
     <input id='uploadfile' placeholder='Choose file' disabled='disabled'>
     <input id='uploadbtn' name='fwupload' type='file'>
   </div>
-    <input type='submit' value='Upload'>
+    <input type='submit' value='Upload' data-wait='Uploading, do NOT interrupt!'>
   </form>
   <span class='help'>help</span>
 </section>
