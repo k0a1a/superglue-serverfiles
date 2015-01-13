@@ -294,7 +294,7 @@ cat > $_POST_TMP  ## cautiously storing entire POST in a file
 case "${_CONTENT_TYPE}" in
   application\/x-www-form-urlencoded) postUrlenc ;;
            application\/octet-stream) postOctet ;;
-                 multipart/form-data) postMpart ;;
+                multipart\/form-data) postMpart ;;
                                    *) _ERR=1; _OUT='this is not a post' ;;
 esac
 [[ -e $_POST_TMP ]] && rm -f $_POST_TMP
