@@ -1,6 +1,11 @@
 .DS_Store
 dist
-readme.md
-*~
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+*.revision
+Session.vim
+.netrwhist
+*~*~
 \.\#*
 \#*\#
