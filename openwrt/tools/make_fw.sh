@@ -10,13 +10,18 @@
 ## - Superglue serverfiles local repo (which this script is part of):
 ##    http://git.superglue.it/superglue/serverfiles/tree/master
 
+set -e
+
+## make sure we are running from upper level directory
+[[ $(pwd) == $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ) ]] && (echo "ERROR: must be run as ./tools/$(basename $0), exiting"; exit 1;)
+
 _PWD=$(pwd)
 _IMAGEBUILDER="$_PWD/../../../openwrt/OpenWrt-ImageBuilder-ar71xx_generic-for-linux-x86_64"
 _BUILDS="$_PWD/../../../sg-builds"
 
-set -e
 [[ -e $_IMAGEBUILDER ]] || (echo 'ImageBuilder is missing'; exit 1;)
 [[ -e $_BUILDS ]] || (echo 'Builds directory is missing'; exit 1;)
+
 set +e
 
 ## dirs with platform specific files
@@ -30,9 +35,12 @@ _MAJOR='0.1'  ## bump that on major changes
 #_SUFFIX='git'  ## could be 'beta', 'rc', etc
 _SUFFIX='k0a1a'  ## could be 'beta', 'rc', etc
 
+_SG_REVISION="$_PWD/include/superglue.revision"
+_OPENWRT_REVISION="$_PWD/include/openwrt.revision"
+
 ## read build serial, incremented on every successful build
-if [[ -e sg_$_MAJOR.revision ]]; then
-  read _MINOR < sg_$_MAJOR.revision
+if [[ -e $_SG_REVISION ]]; then
+  read _MINOR < $_SG_REVISION
   let _MINOR++
 else _MINOR=0
 fi
@@ -40,7 +48,7 @@ fi
 ## get OpenWRT revision number
 _OPENWRT=$(fgrep -m1 'REVISION:=' $_IMAGEBUILDER/include/version.mk || echo 'r00000')
 _OPENWRT=${_OPENWRT/REVISION:=/}
-echo $_OPENWRT > openwrt.revision
+echo $_OPENWRT > $_OPENWRT_REVISION
 
 _VERSION="$_MAJOR"."$_MINOR"-"$_SUFFIX"
 
@@ -91,7 +99,7 @@ done
 
 if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
-  echo $_MINOR > sg_$_MAJOR.revision
+  echo $_MINOR > $_SG_REVISION
   echo -e "\nBuilding SUCCEEDED! :)\n"
 
   ## create symlinks to latest

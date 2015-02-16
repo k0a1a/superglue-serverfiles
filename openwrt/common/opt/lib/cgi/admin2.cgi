@@ -15,7 +15,7 @@
 
 readonly _WWW='/www'
 readonly _PWDFILE="/opt/lib/htpasswd"
-readonly _TMP="${_WWW}/tmp"
+readonly _TMP='/tmp'
 readonly _LOG="${_WWW}/log/admin.log"
 readonly _DEBUG=1
 readonly _IFS=$IFS
