@@ -40,7 +40,6 @@ _OPENWRT_REVISION="$_PWD/include/openwrt.revision"
 
 ## browser extension (if any)
 _EXT_SRC="$_PWD/../../editor/build/firefox/superglue.xpi"
-_EXT_DST="$_COMMON/opt/lib/extension/superglue.xpi"
 
 ## read build serial, incremented on every successful build
 if [[ -e $_SG_REVISION ]]; then
@@ -72,8 +71,15 @@ for _TARGET in $_TARGETS; do
   echo 'copying common and target specific files..'
   cp -Ra $_COMMON $_TARGET.tmp
   cp -Ra $_TARGET/* $_TARGET.tmp/
-  [[ -e $_EXT_SRC ]] && cp -Ra $_EXT_SRC $_EXT_DST
-  sleep 1
+   sleep 1
+
+  if [[ -e $_EXT_SRC ]]; then
+    echo 'copying browser extension..'
+    _EXT_DST="$_TARGET.tmp/opt/lib/extension/superglue.xpi"
+    [[ -e $(dirname $_EXT_DST) ]] || mkdir $(dirname $_EXT_DST)
+    cp -Ra $_EXT_SRC $_EXT_DST
+    sleep 1
+  fi
 
   echo 'cleaning temporary files..'
   find . -name '*.swp' -o -iname "[._]*.s[a-w][a-z]" -o -iname '*.tmp' -o -iname '*.bup' -o -iname '*.bak' -exec rm -Rf {} \;
@@ -83,8 +89,8 @@ for _TARGET in $_TARGETS; do
   echo $_VERSION > $_TARGET.tmp/etc/superglue_version
   cd $_IMAGEBUILDER && make clean
 
-  echo 'ready for building an image!'
-  sleep 1
+  echo 'ready for building the image!'
+  sleep 3; clear
 
   ## package stash, might need these:
   # kmod-fs-vfat kmod-fs-btrfs btrfs-progs
