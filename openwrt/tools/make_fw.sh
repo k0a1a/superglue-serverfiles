@@ -38,6 +38,10 @@ _SUFFIX='k0a1a'  ## could be 'beta', 'rc', etc
 _SG_REVISION="$_PWD/include/superglue.revision"
 _OPENWRT_REVISION="$_PWD/include/openwrt.revision"
 
+## browser extension (if any)
+_EXT_SRC="$_PWD/../../editor/build/firefox/superglue.xpi"
+_EXT_DST="$_COMMON/opt/lib/extension/superglue.xpi"
+
 ## read build serial, incremented on every successful build
 if [[ -e $_SG_REVISION ]]; then
   read _MINOR < $_SG_REVISION
@@ -59,26 +63,41 @@ echo 'Removing temporary dirs (if any)'
 find -maxdepth 1 -name *.tmp -exec rm -Rf {} \;
 
 for _TARGET in $_TARGETS; do
+  _BIN_DIR=$_BUILDS/$_VERSION/$_TARGET
+  echo 'cleaning target and binary directories..'
   [[ -e $_TARGET.tmp ]] && rm -Rf $_TARGET.tmp 
+  [[ -e $_BIN_DIR ]] && rm -Rf $_BIN_DIR
+  sleep 1
+
+  echo 'copying common and target specific files..'
   cp -Ra $_COMMON $_TARGET.tmp
   cp -Ra $_TARGET/* $_TARGET.tmp/
+  [[ -e $_EXT_SRC ]] && cp -Ra $_EXT_SRC $_EXT_DST
+  sleep 1
 
-  echo 'cleaning temporary files'
-  find . -name '*.swp' -o -name '*.swo' -o -name '*.tmp' -o -name '*.bup' -o -name '*.bak' -exec rm -rf {} \;
+  echo 'cleaning temporary files..'
+  find . -name '*.swp' -o -iname "[._]*.s[a-w][a-z]" -o -iname '*.tmp' -o -iname '*.bup' -o -iname '*.bak' -exec rm -Rf {} \;
 
   sed -e "s/%REVISION%/$_OPENWRT/g" -e "s/%VERSION%/$_VERSION/g" $_COMMON/etc/banner > $_TARGET.tmp/etc/banner
 
   echo $_VERSION > $_TARGET.tmp/etc/superglue_version
   cd $_IMAGEBUILDER && make clean
 
+  echo 'ready for building an image!'
+  sleep 1
+
   ## package stash, might need these:
   # kmod-fs-vfat kmod-fs-btrfs btrfs-progs
 
-  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 rpcd-mod-iwinfo" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BUILDS/$_VERSION/$_TARGET/openwrt && 
+  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 rpcd-mod-iwinfo" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt && 
 
-  ln -s $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-factory.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$_VERSION-$(echo $_TARGET | tr [:upper:] [:lower:])-factory.bin
-  ln -s $_BUILDS/$_VERSION/$_TARGET/openwrt/openwrt-*-sysupgrade.bin $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-$_VERSION-$(echo $_TARGET | tr [:upper:] [:lower:])-sysupgrade.bin
-  cd $_BUILDS/$_VERSION/$_TARGET
+  ## define how firmware files are named
+  _FN_PREFIX='superglue-firmware'
+  _FILENAME="$_FN_PREFIX"_"$_VERSION"_"$(echo $_TARGET | tr [:upper:] [:lower:])"
+
+  ln -s $_BIN_DIR/openwrt/openwrt-*-factory.bin $_BIN_DIR/$_FILENAME'_initial.bin'
+  ln -s $_BIN_DIR/openwrt/openwrt-*-sysupgrade.bin $_BIN_DIR/$_FILENAME'_upgrade.bin'
+  cd $_BIN_DIR
   md5sum *.bin > md5sums
   cd -
 
@@ -87,7 +106,7 @@ for _TARGET in $_TARGETS; do
   if [[ $_ERR -eq 0 ]]; then 
     echo -e "\n$_TARGET build completed\n"
   else
-    rm -Rf $_BUILDS/$_VERSION/$_TARGET
+    rm -Rf $_BIN_DIR
   fi
 
   echo 'Cleaning up..'
@@ -107,12 +126,12 @@ if [[ $_ERR -eq 0 ]]; then
   for _TARGET in $_TARGETS; do
     [[ -e $_BUILDS/latest/$_TARGET ]] && rm -f $_BUILDS/latest/$_TARGET/* || mkdir $_BUILDS/latest/$_TARGET
     #set -o xtrace
-    _FACTORY="$_BUILDS"/latest/"$_TARGET"/superglue-firmware-$(echo "$_TARGET" | tr [:upper:] [:lower:])-"${_VERSION}"-factory.bin
-    _SYSUPGRADE=$_BUILDS/latest/"$_TARGET"/superglue-firmware-$(echo "$_TARGET" | tr [:upper:] [:lower:])-"${_VERSION}"-sysupgrade.bin
+    _FACTORY="$_BUILDS"/latest/"$_TARGET"/$_FILENAME-initial.bin
+    _SYSUPGRADE=$_BUILDS/latest/"$_TARGET"/$_FILENAME-upgrade.bin
 
-    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-factory.bin $_FACTORY &&
+    ln -sf $_BIN_DIR/$_FN_PREFIX-*-initial.bin $_FACTORY &&
       echo -e "$_FACTORY\n"
-    ln -sf $_BUILDS/$_VERSION/$_TARGET/superglue-firmware-*-sysupgrade.bin $_SYSUPGRADE &&
+    ln -sf $_BIN_DIR/$_FN_PREFIX-*-upgrade.bin $_SYSUPGRADE &&
       echo -e "$_SYSUPGRADE\n"
 
     # set +o xtrace
