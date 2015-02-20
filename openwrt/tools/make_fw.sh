@@ -5,8 +5,10 @@
 ##
 ## Needs:
 ## - OpenWRT ImageBuilder blob:
-##    http://downloads.openwrt.org/barrier_breaker/14.07-rc3/ar71xx/generic 
+##    http://downloads.openwrt.org/barrier_breaker/14.07/ar71xx/generic
 ##    or http://downloads.openwrt.org/snapshots/trunk/ar71xx
+## - Fetch (needed) packages:
+##    https://downloads.openwrt.org/barrier_breaker/14.07/ar71xx/generic/packages
 ## - Superglue serverfiles local repo (which this script is part of):
 ##    http://git.superglue.it/superglue/serverfiles/tree/master
 
@@ -31,22 +33,32 @@ _TARGETS='TLWR710'
 ## dir with common files
 _COMMON='common'
 
-_MAJOR='0.1'  ## bump that on major changes
-#_SUFFIX='git'  ## could be 'beta', 'rc', etc
-_SUFFIX='k0a1a'  ## could be 'beta', 'rc', etc
+_SG_REVISION="$_PWD/superglue.revision"
 
-_SG_REVISION="$_PWD/include/superglue.revision"
-_OPENWRT_REVISION="$_PWD/include/openwrt.revision"
+if [[ -e $_SG_REVISION ]]; then
+  source $_SG_REVISION
+else
+  ## versioning defaults
+  ## change these in $_SG_REVISION 
+  _MAJOR='0.1'
+  _MINOR='0'
+  _SUFFIX='testing'
+fi
+
+let _MINOR++
+
+#_SG_REVISION="$_PWD/superglue.revision"
+_OPENWRT_REVISION="$_PWD/openwrt.revision"
 
 ## browser extension (if any)
 _EXT_SRC="$_PWD/../../editor/build/firefox/superglue.xpi"
 
 ## read build serial, incremented on every successful build
-if [[ -e $_SG_REVISION ]]; then
-  read _MINOR < $_SG_REVISION
-  let _MINOR++
-else _MINOR=0
-fi
+#if [[ -e $_SG_REVISION ]]; then
+#  read _MINOR < $_SG_REVISION
+#  let _MINOR++
+#else _MINOR=0
+#fi
 
 ## get OpenWRT revision number
 _OPENWRT=$(fgrep -m1 'REVISION:=' $_IMAGEBUILDER/include/version.mk || echo 'r00000')
@@ -55,8 +67,22 @@ echo $_OPENWRT > $_OPENWRT_REVISION
 
 _VERSION="$_MAJOR"."$_MINOR"-"$_SUFFIX"
 
-echo "About to start building version: $_VERSION"
-echo -e "Targets for this build: $_TARGETS\n"
+echo -e "Build ver: $_VERSION
+Targets: $_TARGETS\n"
+
+trap abort INT
+
+abort() {
+  echo -e "Bye..\n"
+  exit 1
+}
+
+echo 'Ready? [Y/n] '; read _USER_ANSW
+if [[ $_USER_ANSW == 'n' ]]; then
+  abort
+elif [[ $_USER_ANSW == 'y' || $_USER_ANSW == '' ]]; then
+  true
+fi
 
 echo 'Removing temporary dirs (if any)'
 find -maxdepth 1 -name *.tmp -exec rm -Rf {} \;
@@ -89,26 +115,30 @@ for _TARGET in $_TARGETS; do
   echo $_VERSION > $_TARGET.tmp/etc/superglue_version
   cd $_IMAGEBUILDER && make clean
 
-  echo 'ready for building the image!'
-  sleep 3; clear
+  echo -e "\nbuilding $_TARGET image!\n"
+  sleep 2
 
   ## package stash, might need these:
   # kmod-fs-vfat kmod-fs-btrfs btrfs-progs
 
-  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 rpcd-mod-iwinfo" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt && 
+  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 rpcd-mod-iwinfo dtach" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
+  _ERR=$?
+  if [[ $_ERR -gt 0 ]]; then
+    echo -e "\nFAILED to build $_TARGET image :/ (are we missing packages?) \n"
+    exit 1
+  fi
 
   ## define how firmware files are named
   _FN_PREFIX='superglue-firmware'
   _FILENAME="$_FN_PREFIX"_"$_VERSION"_"$(echo $_TARGET | tr [:upper:] [:lower:])"
 
-  ln -s $_BIN_DIR/openwrt/openwrt-*-factory.bin $_BIN_DIR/$_FILENAME'_initial.bin'
-  ln -s $_BIN_DIR/openwrt/openwrt-*-sysupgrade.bin $_BIN_DIR/$_FILENAME'_upgrade.bin'
-  cd $_BIN_DIR
+  ln -s $_BIN_DIR/openwrt/openwrt-*-factory.bin $_BIN_DIR/$_FILENAME'_initial.bin' &&
+  ln -s $_BIN_DIR/openwrt/openwrt-*-sysupgrade.bin $_BIN_DIR/$_FILENAME'_upgrade.bin' &&
+  cd $_BIN_DIR &&
   md5sum *.bin > md5sums
   cd -
 
   _ERR=$?
-
   if [[ $_ERR -eq 0 ]]; then 
     echo -e "\n$_TARGET build completed\n"
   else
@@ -124,7 +154,8 @@ done
 
 if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
-  echo $_MINOR > $_SG_REVISION
+  ## echo $_MINOR > $_SG_REVISION
+  echo -e "_MAJOR=$_MAJOR\n_MINOR=$_MINOR\n_SUFFIX=$_SUFFIX" > $_SG_REVISION
   echo -e "\nBuilding SUCCEEDED! :)\n"
 
   ## create symlinks to latest
@@ -132,12 +163,12 @@ if [[ $_ERR -eq 0 ]]; then
   for _TARGET in $_TARGETS; do
     [[ -e $_BUILDS/latest/$_TARGET ]] && rm -f $_BUILDS/latest/$_TARGET/* || mkdir $_BUILDS/latest/$_TARGET
     #set -o xtrace
-    _FACTORY="$_BUILDS"/latest/"$_TARGET"/$_FILENAME-initial.bin
-    _SYSUPGRADE=$_BUILDS/latest/"$_TARGET"/$_FILENAME-upgrade.bin
+    _FACTORY="$_BUILDS"/latest/"$_TARGET"/$_FILENAME'_initial.bin'
+    _SYSUPGRADE=$_BUILDS/latest/"$_TARGET"/$_FILENAME'_upgrade.bin'
 
-    ln -sf $_BIN_DIR/$_FN_PREFIX-*-initial.bin $_FACTORY &&
+    ln -sf $_BIN_DIR/$_FILENAME'_initial.bin' $_FACTORY &&
       echo -e "$_FACTORY\n"
-    ln -sf $_BIN_DIR/$_FN_PREFIX-*-upgrade.bin $_SYSUPGRADE &&
+    ln -sf $_BIN_DIR/$_FILENAME'_upgrade.bin' $_SYSUPGRADE &&
       echo -e "$_SYSUPGRADE\n"
 
     # set +o xtrace

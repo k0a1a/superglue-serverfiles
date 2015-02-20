@@ -5,6 +5,8 @@
 ## assumes that DEST host has key based auth enabled,
 ## otherwise password will be prompted everytime
 
+pwd
+
 CMD='FILE=%f; DEST_FILE=${FILE#*/*/};
 scp $FILE superglue:/$DEST_FILE; 
 if [ $? -eq 0 ]; then 
@@ -15,5 +17,5 @@ fi'
 
 #CMD='echo %f'
 
-iwatch -c "eval $CMD" -e modify -X '\.sw.?' -r .
+iwatch -c "eval $CMD" -e modify -r -X "\.sw.?|\.revision|\.tmp|tools" ./
 

@@ -1,4 +1,4 @@
-#!/usr/bin/haserl --shell=/bin/bash  --upload-limit=32768 --upload-dir=/www/tmp 
+#!/usr/bin/haserl --shell=/bin/bash  --upload-limit=32768 --upload-dir=/tmp
 <%# upload limit: 32Mb %>
 <%
 
@@ -88,6 +88,7 @@ setQueryVars() {
 runSuid() {
   local _SID=$(/usr/bin/ps -p $$ -o sid=)  ## pass session id to the child
   local _CMD=$@
+  logThis "command: $_CMD"
   /usr/bin/sudo ./suid.sh $_CMD $_SID 2>/dev/null
 }
 
@@ -143,8 +144,11 @@ lanAddr() {
   if [[ $_ERR -gt 0 ]]; then
     showMesg 'Setting network address failed'
   else
-    (sleep 1; doUci commit network; doUci commit wireless;)&
-    showMesg 'New network address is set' '30' "Your server is now accessible under <a href='http://superglue.local/admin'>http://superglue.local/admin</a>"
+    doUci commit network &&
+    runSuid "dtach -n -zE /opt/lib/scripts/net-restart.sh" &&
+
+    showMesg 'New network address is set' '30' "Your server is now accessible under <a href='http://superglue.local/admin'>http://superglue.local/admin</a>" || 
+    showMesg 'Setting network address failed'
   fi 
 }
 
@@ -196,8 +200,14 @@ wanSet() {
     ## background the following
     ##(doUci commit network; doUci commit wireless) &&
     (doUci commit network; doUci commit wireless;) &&
-    showMesg 'Internet connection is being configured' '25' 'initializing - ' ||
-    showMesg 'Configuring Internet connection failed'
+    runSuid "dtach -n -zE /opt/lib/scripts/net-restart.sh"
+  
+    _ERR=$?
+    if [[ $_ERR -gt 0 ]]; then
+      showMesg 'Configuring Internet connection failed'
+    else
+      showMesg 'Internet connection is being configured' '35' 'check your Internet connection on completion - '
+    fi 
   fi
   logThis "new WAN iface is: $POST_wanifname"
 }
@@ -246,11 +256,21 @@ ssidChange() {
     [[ $_ERR -gt 0 ]] && showMesg 'Passphrase is not set'
   fi
   [[ $_ERR -gt 0 ]] && showMesg 'Wireless configuration failed'
-  doUci set lanipaddr ${POST_lanipaddr}
-  _ERR=$?
-  [[ $_ERR -gt 0 ]] && showMesg 'LAN IP configuration failed'
-  (doUci commit network; doUci commit wireless;) &&
-  showMesg 'Local network configuration applied' '25' 'please reconnect to your network - '
+  if [[ $POST_iface == 'lan' ]]; then
+    #doUci set lanipaddr ${POST_lanipaddr}
+    #_ERR=$?
+    #[[ $_ERR -gt 0 ]] && showMesg 'LAN IP configuration failed'
+    if [[ "$(doUci get lanipaddr)" !=  "${POST_lanipaddr}" ]]; then
+      logThis 'local IP was changed'
+      lanAddr
+    fi
+  fi
+  doUci commit wireless &&
+  runSuid "dtach -n -zE /opt/lib/scripts/net-restart.sh"
+
+  if [[ $POST_iface == 'lan' ]]; then
+    showMesg 'Local network configuration is progress' '45' 'check your connection on completion - '
+  fi
 }
 
 #showError() {
@@ -275,10 +295,10 @@ showMesg() {
     local _TYPE='OK: '
     headerPrint 200
   fi
-  htmlHead "<meta http-equiv='refresh' content='${_TIMEOUT};url=${HTTP_REFERER}'>"
+  htmlHead "<meta http-equiv='refresh' content='${_TIMEOUT};url=http://${HTTP_HOST}/admin'>"
   _echo "<body>
   <h1>Superglue server control panel</h1>
-  <img src='http://"${HTTP_HOST}"/resources/img/superglueLogo.png' class='logo'>
+  <img src='http://${HTTP_HOST}/resources/img/superglueLogo.png' class='logo'>
   <hr>
   <h2 style='display:inline'>$_TYPE $_MSG</h2>
   <span style='display:block'>$_SUBMSG</span>
@@ -287,8 +307,8 @@ showMesg() {
   <script type='text/javascript'>(function(e){var t=document.getElementById(e);var n=t.innerHTML;var r=setInterval(function(){if(n==0){t.innerHTML='0';clearInterval(r);return}t.innerHTML=n;n--},1e3)})('timeout')
   </script>
   </html>"
-
   exit 0
+
 #  _echo "<body>
 #<h1>SG</h1>
 #<hr>
@@ -302,15 +322,12 @@ showMesg() {
 updateFw() {
   logThis "updating fw"
   _FWFILE="${_TMP}/fwupload.bin"
-  logThis "fwfile is: $(ls -lad $_FWFILE)"
   _OUT="$(/sbin/sysupgrade -T $_FWFILE 2>&1)"
   _ERR=$?
-  [[ $_ERR -gt 0 ]] && showMesg "$_OUT"
-  _OUT="$(runSuid /sbin/mtd -r -e firmware -q write $_FWFILE firmware)"
-  _ERR=$?
-  [[ $_ERR -gt 0 ]] && showMesg "mtd failed, $_OUT"
-  #runSuid reboot
-  showMesg 'Firmware update is completing..' '90' 'Device will be rebooted -'
+  [[ $_ERR -gt 0 ]] && showMesg "Firmware upgrade failed! $_OUT"
+  ## using dtach to prevent sysupgrade getting killed
+  runSuid "dtach -n -zE /opt/lib/scripts/fw-upgrade.sh $_FWFILE"
+  showMesg 'Firmware upgrade is in progress..' '120' 'Device needs to reboot -'
 }
 
 usbInit() {
@@ -434,14 +451,14 @@ doUci() {
   fi
 
   if [[ $_CMD == 'commit' ]]; then
-    runSuid /sbin/uci commit $_ARG|| echo "uci commit $_ARG: error"
-    if [[ "$_ARG" == 'wireless' ]]; then
-      runSuid /sbin/wifi || echo 'wifi: error'
-    fi
-    if [[ "$_ARG" == 'network' ]]; then
-      runSuid "/etc/init.d/dnsmasq reload"
-      runSuid "/etc/init.d/network reload"
-    fi
+    runSuid /sbin/uci commit $_ARG || echo "uci commit $_ARG: error"
+#    if [[ "$_ARG" == 'wireless' ]]; then
+#      runSuid /sbin/wifi || echo 'wifi: error'
+#    fi
+#    if [[ "$_ARG" == 'network' ]]; then
+#      runSuid /etc/init.d/dnsmasq reload
+#      runSuid /etc/init.d/network reload
+#    fi
   fi
 }
 
@@ -656,7 +673,7 @@ wankey=$(doUci get wankey)
 
 
 <section>
-  <h2>Update firmware:</h2>
+  <h2>Firmware upgrade:</h2>
   <form method='post' action='/admin/updatefw' enctype='multipart/form-data'>
   <div id='uploadbox'>
     <input id='uploadfile' placeholder='Choose file' disabled='disabled'>
