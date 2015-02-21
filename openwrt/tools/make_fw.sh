@@ -43,6 +43,7 @@ else
   _MAJOR='0.1'
   _MINOR='0'
   _SUFFIX='testing'
+  echo -e "_MAJOR=$_MAJOR\n_MINOR=$_MINOR\n_SUFFIX=$_SUFFIX" > $_SG_REVISION
 fi
 
 let _MINOR++
