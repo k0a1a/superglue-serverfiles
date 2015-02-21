@@ -1,9 +1,9 @@
 #!/bin/sh
 
-sleep 3
+sleep 2
 
 /sbin/wifi
-/etc/init.d/network restart
-/etc/init.d/dnsmasq restart
+/etc/init.d/network reload
+/etc/init.d/dnsmasq reload
 
 exit 0

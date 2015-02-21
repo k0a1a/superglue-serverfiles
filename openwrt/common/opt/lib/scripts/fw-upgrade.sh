@@ -1,8 +1,7 @@
 #!/bin/sh
 
-sleep 3
+sleep 2
 
-sysupgrade -v $1 > /tmp/fw-upgrade.log
+sysupgrade -q $1 ##> /tmp/fw-upgrade.log
 
 exit 0
-

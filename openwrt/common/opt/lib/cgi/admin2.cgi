@@ -17,6 +17,7 @@ readonly _WWW='/www'
 readonly _PWDFILE="/opt/lib/htpasswd"
 readonly _TMP='/tmp'
 readonly _LOG="${_WWW}/log/admin.log"
+readonly _SCRIPTS='/opt/lib/scripts'
 readonly _DEBUG=1
 readonly _IFS=$IFS
 
@@ -51,7 +52,7 @@ headerPrint() {
 
 ## faster echo
 _echo() {
-  printf "%s" "${*}"
+  printf "%b" "${*}"
 }
 
 htDigest() {
@@ -88,8 +89,7 @@ setQueryVars() {
 runSuid() {
   local _SID=$(/usr/bin/ps -p $$ -o sid=)  ## pass session id to the child
   local _CMD=$@
-  logThis "command: $_CMD"
-  /usr/bin/sudo ./suid.sh $_CMD $_SID 2>/dev/null
+  /usr/bin/sudo $_SCRIPTS/suid.sh $_CMD $_SID 2>/dev/null
 }
 
 getQueryFile() {
@@ -126,29 +126,28 @@ pwdChange() {
     showMesg 'Password must be at least 6 characters long'
   fi
 
-  runSuid "echo -e \"$POST_pwd\n$POST_pwd\" | passwd root"
-  runSuid "echo $(htDigest $POST_pwd) > $_PWDFILE"
+  _OUT=$(runSuid "echo -e \"$POST_pwd\n$POST_pwd\" | passwd root 2>&1" &&
+  runSuid "echo $(htDigest $POST_pwd) > $_PWDFILE")
   _ERR=$?
+
   if [[ $_ERR -gt 0 ]]; then
-    showMesg 'Password change failed'
+    showMesg 'Password change failed!' '5' "$_OUT -"
   else
-    showMesg 'Password is changed'
+    showMesg 'Password is changed' '2'
   fi
 }
 
 lanAddr() {
   logThis "new LAN addr is: $POST_lanipaddr"
   validIp $POST_lanipaddr || showMesg 'Not valid network address'
-  doUci set lanipaddr $POST_lanipaddr
+  doUci set lanipaddr $POST_lanipaddr &&
+  doUci commit network
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
     showMesg 'Setting network address failed'
   else
-    doUci commit network &&
-    runSuid "dtach -n -zE /opt/lib/scripts/net-restart.sh" &&
-
-    showMesg 'New network address is set' '30' "Your server is now accessible under <a href='http://superglue.local/admin'>http://superglue.local/admin</a>" || 
-    showMesg 'Setting network address failed'
+    runSuid "dtach -n -zE $_SCRIPTS/net-restart.sh"
+    showMesg 'New network address is set' '30' "Your server is now accessible under <a href='http://superglue.local/admin'>http://superglue.local/admin</a>"
   fi 
 }
 
@@ -195,21 +194,18 @@ wanSet() {
       doUci set wandns $POST_wandns
     fi
     if [[ $POST_wanifname == 'wlan1' ]]; then
-      ssidChange || showMesg 'Wireless changes failed'
+      ssidChange || showMesg 'Wireless configuration failed'
     fi
-    ## background the following
-    ##(doUci commit network; doUci commit wireless) &&
-    (doUci commit network; doUci commit wireless;) &&
-    runSuid "dtach -n -zE /opt/lib/scripts/net-restart.sh"
-  
+    doUci commit network && doUci commit wireless
     _ERR=$?
-    if [[ $_ERR -gt 0 ]]; then
-      showMesg 'Configuring Internet connection failed'
+
+    runSuid "dtach -n -zE $_SCRIPTS/net-restart.sh"
+    if [[ $_ERR -eq 0 ]]; then
+      showMesg 'Internet connection is being configured' '20' 'check your Internet connection on completion - '
     else
-      showMesg 'Internet connection is being configured' '35' 'check your Internet connection on completion - '
-    fi 
+      showMesg 'Configuring Internet connection failed'
+    fi
   fi
-  logThis "new WAN iface is: $POST_wanifname"
 }
 
 ssidChange() {
@@ -257,19 +253,25 @@ ssidChange() {
   fi
   [[ $_ERR -gt 0 ]] && showMesg 'Wireless configuration failed'
   if [[ $POST_iface == 'lan' ]]; then
-    #doUci set lanipaddr ${POST_lanipaddr}
-    #_ERR=$?
-    #[[ $_ERR -gt 0 ]] && showMesg 'LAN IP configuration failed'
     if [[ "$(doUci get lanipaddr)" !=  "${POST_lanipaddr}" ]]; then
       logThis 'local IP was changed'
       lanAddr
     fi
   fi
-  doUci commit wireless &&
-  runSuid "dtach -n -zE /opt/lib/scripts/net-restart.sh"
+  doUci commit wireless
+  _ERR=$?
+
+  if [[ $_ERR -gt 0 ]]; then
+    showMesg 'Configuration failed'
+  else
+    runSuid "dtach -n -zE $_SCRIPTS/net-restart.sh"
+  fi
 
   if [[ $POST_iface == 'lan' ]]; then
     showMesg 'Local network configuration is progress' '45' 'check your connection on completion - '
+  else
+    ## in this case wanSet() handles success message
+    true
   fi
 }
 
@@ -287,7 +289,7 @@ showMesg() {
   local _SUBMSG=$3
   _MSG=${_MSG:='Configuration'}
   _TIMEOUT=${_TIMEOUT:='5'}
-  _SUBMSG="${_SUBMSG} waiting <span id='timeout'>${_TIMEOUT}</span> seconds to get ready.."
+  _SUBMSG="${_SUBMSG} <span id='timeout'>${_TIMEOUT}</span> seconds to get ready.."
   if [[ $_ERR -gt 0 ]]; then
     local _TYPE='ERROR: '
     headerPrint 406
@@ -324,16 +326,16 @@ updateFw() {
   _FWFILE="${_TMP}/fwupload.bin"
   _OUT="$(/sbin/sysupgrade -T $_FWFILE 2>&1)"
   _ERR=$?
-  [[ $_ERR -gt 0 ]] && showMesg "Firmware upgrade failed! $_OUT"
+  [[ $_ERR -gt 0 ]] && showMesg "Firmware upgrade failed!\n$_OUT"
   ## using dtach to prevent sysupgrade getting killed
-  runSuid "dtach -n -zE /opt/lib/scripts/fw-upgrade.sh $_FWFILE"
+  runSuid "dtach -n -zE $_SCRIPTS/fw-upgrade.sh $_FWFILE"
   showMesg 'Firmware upgrade is in progress..' '120' 'Device needs to reboot -'
 }
 
 usbInit() {
-  _OUT="$(runSuid /opt/lib/scripts/usb-part.sh)"
+  _OUT="$(runSuid $_SCRIPTS/usb-part.sh)"
   _ERR=$?
-  [[ $_ERR -gt 0 ]] && showMesg "usb init failed, $_OUT"
+  [[ $_ERR -gt 0 ]] && showMesg "USB init failed!\n$_OUT"
   showMesg 'USB storage initialization is completed' '30'
 #  logThis 'usb init..'
 }
@@ -358,7 +360,7 @@ upTime() {
 }
 
 iwScan() {
-  . /opt/lib/scripts/iw-scan.sh
+  . $_SCRIPTS/iw-scan.sh
   headerPrint 200
   iwScanJ
   exit 0
