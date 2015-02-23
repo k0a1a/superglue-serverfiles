@@ -122,7 +122,7 @@ for _TARGET in $_TARGETS; do
   ## package stash, might need these:
   # kmod-fs-vfat kmod-fs-btrfs btrfs-progs
 
-  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 rpcd-mod-iwinfo dtach" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
+  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 coreutils-sha1sum rpcd-mod-iwinfo dtach" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
     echo -e "\nFAILED to build $_TARGET image :/ (are we missing packages?) \n"

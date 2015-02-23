@@ -1,12 +1,10 @@
 #!/bin/bash
 
-uci -q get superglue.dyndns.disabled && exit 0
-
 set -e
-_UPDATEURL=$(uci get superglue.dyndns.updateurl)
-_TOKEN=$(uci get superglue.dyndns.token)
-set +e
+uci -q get superglue.dyndns.disabled && exit 1
+uci -q get superglue.dyndns.domainname || exit 1
 
-/usr/bin/wget -q "${_UPDATEURL}${_TOKEN}" -O - >> /www/log/dyndns.log
+_UPDATEURL=$(uci get superglue.dyndns.updateurl)
+/usr/bin/wget -q "${_UPDATEURL}" -O - >> /www/log/dyndns.log
 
 exit 0

@@ -2,7 +2,7 @@
 <%# upload limit: 32Mb %>
 <%
 
-## SuperGlue project | http://superglue.it | 2014 | GPLv3
+## SuperGlue project | http://superglue.it | 2014-2015 | GPLv3
 ## http://git.superglue.it/superglue/serverfiles
 ##
 ## admin2.cgi - control panel for Superglue personal server
@@ -268,7 +268,7 @@ ssidChange() {
   fi
 
   if [[ $POST_iface == 'lan' ]]; then
-    showMesg 'Local network configuration is progress' '45' 'check your connection on completion - '
+    showMesg 'Local network configuration is progress' '30' 'check your connection on completion - '
   else
     ## in this case wanSet() handles success message
     true
@@ -401,6 +401,50 @@ swapInfo() {
   fi
 }
 
+trimSpaces() {
+  local v="$*"
+  v="${v#"${v%%[![:space:]]*}"}"
+  v="${v%"${v##*[![:space:]]}"}"
+  return "$v"
+}
+
+dynDns() {
+  ## curently only http://freedns.afraid.org is supported
+  [[ $POST_dyndnsname && $POST_dyndnsuser && $POST_dyndnspass ]] || showMesg 'All values must be set!'
+  
+  doUci set dyndnsname "$POST_dyndnsname" &&
+  doUci set dyndnsuser "$POST_dyndnsuser" &&
+  doUci set dyndnspass "$POST_dyndnspass" || showMesg 'DynDNS settings failed..'
+
+  ## create sha1 string per http://freedns.afraid.org/api
+  local _DURL
+  local _AFRAID='http://freedns.afraid.org/api/?action=getdyndns&sha='
+  _DURL=$(_echo "$POST_dyndnsuser|$POST_dyndnspass" | sha1sum)
+  _DURL="$_AFRAID${_DURL/ -/}"
+  _DURL="$(wget -q $_DURL -O -)"
+  local _L
+  local _RES
+  for _L in $_DURL
+    do case $_L in 
+      "${POST_dyndnsname}|"*) IFS='|' _RES=( $_L ); break;; 
+      'ERROR'*) _RES=1; break;;
+      *) unset _RES;;
+    esac;
+  done
+  [[ ! $_RES ]] && showMesg 'Domain name is not found' '10' 'Make sure you entered correct domain name -'
+  [[ $_RES -eq 1 ]] && showMesg 'Authentication failed' '10' 'Check your username and password and try again -'
+
+  logThis "${_RES[@]}"
+
+  doUci set dyndnsurl "${_RES[2]}" &&
+  doUci set dyndnsdis '' &&
+
+  doUci commit  
+
+  showMesg 'DynDNS configuration is in progress..' '10' 'After completion, your URL will become available with in 10-15 minutes -'
+
+}
+
 doUci() {
   local _CMD=''
   local _ARG=''
@@ -424,6 +468,11 @@ doUci() {
     wanssid) _ARG='wireless.@wifi-iface[1].ssid';;
     wanenc) _ARG='wireless.@wifi-iface[1].encryption';;
     wankey) _ARG='wireless.@wifi-iface[1].key';;
+    dyndnsdis) _ARG='superglue.dyndns.disabled';;
+    dyndnsurl) _ARG='superglue.dyndns.updateurl';;
+    dyndnsname) _ARG='superglue.dyndns.domainname';;
+    dyndnsuser) _ARG='superglue.dyndns.username';;
+    dyndnspass) _ARG='superglue.dyndns.password';;
     *) if [[ $_CMD == 'commit' ]]; then
         _ARG=$2
        else 
@@ -504,6 +553,7 @@ if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
                       *wan) wanSet;;
                    *uptime) upTime;;
                    *iwscan) iwScan;;
+                   *dyndns) dynDns;;
                          *) logThis 'bad action'; headerPrint 405; 
                             echo 'no such thing'; exit 1;;
   esac
@@ -518,6 +568,7 @@ read openwrt < /etc/openwrt_version
 
 . /opt/lib/scripts/jshn-helper.sh
 
+## this does not work when iface isn't configured
 IFS=","
 wan=( $(ifaceStat wan) )
 IFS=$OFS
@@ -588,13 +639,21 @@ wankey=$(doUci get wankey)
 
 <section>
   <h2>Domain name:</h2>
-  <form>
-  <input type='text' name='dnsname' id='dnsname' value='<% _echo $dnsname %>' placeholder='domain name' class='inline'>
-  <input type='text' name='dnstoken' id='dnstoken' value='<% _echo $dnstoken %>' placeholder='dns token' class='inline'>
+  <form method='post' action='/admin/dyndns' name='dyndns' id='afraid'>
+  <div style='display:inline-flex'>
+    <div style='display:inline-block;'>
+      <input type='text' name='dyndnsname' id='dyndnsname' value='<% _echo $dyndnsname %>' placeholder='domain name' class='block'>
+    </div>
+    <div style='display:inline-block;'>
+    <input type='text' name='dyndnsuser' id='dyndnsuser' value='<% _echo $dyndnsuser %>' placeholder='dyndns username' class='block'>
+    <input type='password' name='dyndnspass' id='dyndnspass' value='<% _echo $dyndnspass %>' placeholder='dyndns password' class='block'>
+    </div>
+  </div>
   <input type='hidden' name='dns' value='apply' class='inline'>
   <input type='submit' value='Apply'>
   </form>
-  <h2>Free DNS:</h2>
+
+  <h2>Dynamic DNS:</h2>
     Register your free domain name (external <a target='_new' href='http://freedns.afraid.org/'>Free DNS</a> service, will open in a new tab)
     <form target='_new' action='http://freedns.afraid.org/subdomain/edit.php'>
 
@@ -602,8 +661,6 @@ wankey=$(doUci get wankey)
     <select name='edit_domain_id' class='inline'>
     <option value='1035903'>spgl.cc</option>
     <option value='1035903'>spgl.it</option>
-    <option value='1035903'>superglue.it</option>
-    <option value='0'>Many more available..</option>
     </select>
 
     <input type=submit name=submit value="next &gt;&gt;">
