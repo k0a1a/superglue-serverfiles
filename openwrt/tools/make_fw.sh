@@ -1,7 +1,9 @@
 #!/bin/bash
 
-## Firmware image building script
-## http://superglue.it | Danja Vasiliev, 2014
+## SuperGlue project | http://superglue.it | 2014-2015 | GPLv3
+## http://git.superglue.it/superglue/serverfiles
+##
+## make_fw.sh - Superglue firmware image building script
 ##
 ## Needs:
 ## - OpenWRT ImageBuilder blob:
@@ -9,12 +11,13 @@
 ##    or http://downloads.openwrt.org/snapshots/trunk/ar71xx
 ## - Fetch (needed) packages:
 ##    https://downloads.openwrt.org/barrier_breaker/14.07/ar71xx/generic/packages
-## - Superglue serverfiles local repo (which this script is part of):
+## - Superglue serverfiles local repo (which this script is a part of):
 ##    http://git.superglue.it/superglue/serverfiles/tree/master
 
+## errors are futile
 set -e
 
-## make sure we are running from upper level directory
+## make sure we are running from the upper level directory
 [[ $(pwd) == $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ) ]] && (echo "ERROR: must be run as ./tools/$(basename $0), exiting"; exit 1;)
 
 _PWD=$(pwd)
@@ -48,20 +51,12 @@ fi
 
 let _MINOR++
 
-#_SG_REVISION="$_PWD/superglue.revision"
 _OPENWRT_REVISION="$_PWD/openwrt.revision"
 
 ## browser extension (if any)
 _EXT_SRC="$_PWD/../../editor/build/firefox/superglue.xpi"
 
-## read build serial, incremented on every successful build
-#if [[ -e $_SG_REVISION ]]; then
-#  read _MINOR < $_SG_REVISION
-#  let _MINOR++
-#else _MINOR=0
-#fi
-
-## get OpenWRT revision number
+## get OpenWRT revision
 _OPENWRT=$(fgrep -m1 'REVISION:=' $_IMAGEBUILDER/include/version.mk || echo 'r00000')
 _OPENWRT=${_OPENWRT/REVISION:=/}
 echo $_OPENWRT > $_OPENWRT_REVISION
@@ -155,11 +150,10 @@ done
 
 if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
-  ## echo $_MINOR > $_SG_REVISION
   echo -e "_MAJOR=$_MAJOR\n_MINOR=$_MINOR\n_SUFFIX=$_SUFFIX" > $_SG_REVISION
   echo -e "\nBuilding SUCCEEDED! :)\n"
 
-  ## create symlinks to latest
+  ## create symlinks to the latest
   [[ -e $_BUILDS/latest ]] && touch $_BUILDS/latest || mkdir $_BUILDS/latest 
   for _TARGET in $_TARGETS; do
     [[ -e $_BUILDS/latest/$_TARGET ]] && rm -f $_BUILDS/latest/$_TARGET/* || mkdir $_BUILDS/latest/$_TARGET
@@ -171,12 +165,10 @@ if [[ $_ERR -eq 0 ]]; then
       echo -e "$_FACTORY\n"
     ln -sf $_BIN_DIR/$_FILENAME'_upgrade.bin' $_SYSUPGRADE &&
       echo -e "$_SYSUPGRADE\n"
-
-    # set +o xtrace
   done
 
 else
-  echo -e "\nBuilding FAILED.. :/\n"
+  echo -e "\nBuild FAILED.. :/\n"
 fi
 
 exit $_ERR
