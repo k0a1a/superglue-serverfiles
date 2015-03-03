@@ -34,6 +34,18 @@ input, select {
   background: #fcfcfc;
 }
 
+select {
+  padding: 4px 5px 4px 5px;
+  background: url('/resources/img/dropdown.svg') no-repeat right center #fcfcfc;
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  text-indent: 0.01px;
+  background-size: 12px;
+  background-position: 180px;
+  cursor: pointer;
+}
+
 input {
   text-indent: 4px;
   background: #fcfcfc;
@@ -62,11 +74,13 @@ div#uploadbox {
 input#uploadbtn,
 input#uploadfile {
   position: absolute;
-  top: 0;
+  top: -2px;
   left: 0;
-  height: 33px;
+  bottom: 2px;
+  height: 35px;
   cursor: pointer;
   width: auto;
+  min-width: 405px;
 }
 
 input#uploadbtn {
@@ -204,6 +218,24 @@ span.help:active::after
   background-color: #ddd;
 } */
 
-input:read-only { 
-    background-color: #ddd;
+input[type="text"]:read-only { 
+  background-color: #ddd;
+  cursor: default;
+}
+
+input[type="text"]:-moz-read-only {
+  background-color: #ddd;
+  cursor: default;
+}
+
+input[type="text"][disabled] {
+   color: #aaa;
+}
+
+input::-webkit-input-placeholder {
+   color: #777;
+}
+
+:-moz-placeholder {
+  color: #555;
 }

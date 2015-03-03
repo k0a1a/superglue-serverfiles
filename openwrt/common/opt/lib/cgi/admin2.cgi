@@ -522,6 +522,7 @@ _echo "<!-- obnoxious code below, keep your ports tight -->
 <!doctype html>
 <html>
 <head>
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
 <link rel='icon' href='http://${HTTP_HOST}/resources/img/favicon.ico' type='image/x-icon'>
 <title>Superglue server | Control panel</title>
 <link rel='stylesheet' type='text/css' href='http://${HTTP_HOST}/resources/admin/admin.css'>
@@ -656,16 +657,20 @@ wankey=$(doUci get wankey)
   <h2>Dynamic DNS:</h2>
     Register your free domain name (external <a target='_new' href='http://freedns.afraid.org/'>Free DNS</a> service, will open in a new tab)
     <form target='_new' action='http://freedns.afraid.org/subdomain/edit.php'>
-
-    <input type='text' size='15' name='subdomain' placeholder='yourname' class='inline'>
-    <select name='edit_domain_id' class='inline'>
-    <option value='1035903'>spgl.cc</option>
-    <option value='1035903'>spgl.it</option>
-    </select>
-
-    <input type=submit name=submit value="next &gt;&gt;">
-    <input type=hidden name=web_panel value=1>
-    <input type=hidden name=ref value=750930>
+    <div style='display:inline-flex'>
+      <div style='display:inline-block;'>
+        <input type='text' name='subdomain' placeholder='yourname' class='inline'>
+      </div>
+      <div style='display:inline-block;'>
+        <select name='edit_domain_id' class='inline'>
+        <option value='1035903'>spgl.cc</option>
+        <option value='1035903'>spgl.it</option>
+        </select>
+      </div>
+    </div>
+    <input type='submit' name='submit' value="next &gt;&gt;">
+    <input type='hidden' name='web_panel' value='1'>
+    <input type='hidden' name='ref' value='750930'>
     </form>
    
  <span class='help'>help</span>
@@ -735,7 +740,7 @@ wankey=$(doUci get wankey)
   <h2>Firmware upgrade:</h2>
   <form method='post' action='/admin/updatefw' enctype='multipart/form-data'>
   <div id='uploadbox'>
-    <input id='uploadfile' placeholder='Choose file' disabled='disabled'>
+    <input id='uploadfile' placeholder='Select a file..' disabled='disabled'>
     <input id='uploadbtn' name='fwupload' type='file'>
   </div>
     <input type='submit' value='Upload' data-wait='Uploading, do NOT interrupt!'>

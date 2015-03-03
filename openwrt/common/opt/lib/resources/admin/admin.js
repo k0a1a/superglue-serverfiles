@@ -1,7 +1,9 @@
-(function() {
-
 var uploadbtn = document.getElementById('uploadbtn');
 var uploadfile = document.getElementById('uploadfile');
+var wanconf = document.getElementById('wanconf');
+var wanssid = document.getElementById('wanssid');
+var wanwifi = document.getElementById('wanwifi');
+var wanaddr = document.getElementById('wanaddr');
 
 uploadbtn.addEventListener('change', function () {
   uploadfile.value = this.value.replace(/^.*\\/, "");
@@ -11,21 +13,16 @@ uploadbtn.addEventListener('change', function () {
   uploadbtn.style.width = len + "px";
 });
 
-/* onload check wanconf form selects and set accordingly */
-/*  var wanconf = document.getElementById('wanconf');
-var selects = wanconf.getElementsByTagName('select');
-for (i = 0; i < selects.length; i++) { 
-  wanChange(selects[i]);
-}
-*/
+wanconf.addEventListener('change', function(e) { 
+  wanChange(e.target)
+});
 
-var wanconf = document.getElementById('wanconf');
-wanconf.addEventListener('change', function(e) { wanChange(e.target) });
+wanssid.addEventListener('focus', function(e) { 
+  iwScan();
+  e.stopPropagation();
+});
 
 function wanChange(e) {
-  var wanwifi = document.getElementById('wanwifi');
-  var wanaddr = document.getElementById('wanaddr');
-
   switch (e[e.selectedIndex].id) {
     case 'wlan':
       wanwifi.setAttribute('class','show');
@@ -44,16 +41,10 @@ function wanChange(e) {
     //  wanaddr.setAttribute('class','show');
       for (var i = 0; i < wanaddr.children.length; i++) {
         wanaddr.children[i].removeAttribute('readonly');
-}
-      break;
+      }
+    break;
   }
 }
-
-var wanssid = document.getElementById('wanssid');
-wanssid.addEventListener('focus', function(e) { 
-  iwScan();
-  e.stopPropagation();
-});
 
 var submitbtns = document.querySelectorAll('input[type="submit"]');
 for (var i=0; i < submitbtns.length; i++){
@@ -66,19 +57,18 @@ for (var i=0; i < submitbtns.length; i++){
 }
 
 /* update uptime output */
-(function uptimeUpdate() {
-  setTimeout(function() {
-    ajaxReq('POST', '/admin/uptime', 'null', function(xmlDoc) {
-      //console.log(xmlDoc['response'])
-      document.getElementById('uptime').innerHTML = xmlDoc['response'];
-    });
-    uptimeUpdate();
-  }, 5000);
-})();
+function uptimeUpdate() {
+  function run() {
+    ajaxReq('POST', '/admin/uptime', 'null', function(xhr) {
+      if (xhr['response'] != '') {
+        document.getElementById('uptime').innerHTML = xhr['response'];
+      }
+    }); 
+  }
+  return setInterval(run, 5000);
+}
 
-//iwScan();
-
-})();
+var uptime = window.uptimeUpdate();
 
 function iwScan() {
   function comp(a,b) {
@@ -88,16 +78,14 @@ function iwScan() {
       return -1;
     return 0;
   }
-  ajaxReq('POST', '/admin/iwscan', 'null', function(xmlDoc) {
-    var res = JSON.parse(xmlDoc['response']);
+  ajaxReq('POST', '/admin/iwscan', 'null', function(xhr) {
+    var res = JSON.parse(xhr['response']);
     var stas = res['results'].sort(comp);
     var wanssid = document.getElementById('wanssid');
     for (var i = 0; i < Object.keys(stas).length; i++) { 
-//      console.log(stas[i]['ssid']);
-//      console.log(stas[i]);
       var sta;
       if (sta = document.getElementById(stas[i]['ssid'])) {
-        console.log('found ' + stas[i]['ssid'] + ' entry');
+        //console.log('found ' + stas[i]['ssid'] + ' entry');
       } else {
         sta = document.createElement('option');
         sta.id = stas[i]['ssid'];
@@ -111,21 +99,21 @@ function iwScan() {
         wanssid.appendChild(sta);
       }
     }
-    //  console.log(res);
   });
 }
 
-function ajaxReq(url, method, data, callback) {
-  var xmlDoc = new XMLHttpRequest();
-  xmlDoc.open(url, method, true);
-  if (method == 'POST') {
-    xmlDoc.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-  }
-  xmlDoc.onreadystatechange = function() {
-    if (xmlDoc.readyState === 4 && xmlDoc.status === 200) {
-      callback(xmlDoc);
+iwScan()
+
+function ajaxReq(method, url, data, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open(method, url, true);
+  xhr.onerror = function() { clearInterval(uptime) }
+  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4 && xhr.status == 200) { 
+      callback(xhr);
     }
   }
-  xmlDoc.send(data);
+  xhr.send(data);
 }
 
