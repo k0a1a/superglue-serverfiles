@@ -17,16 +17,18 @@ wanconf.addEventListener('change', function(e) {
   wanChange(e.target)
 });
 
-wanssid.addEventListener('focus', function(e) { 
-  iwScan();
+wanssid.addEventListener('focus', function(e) {
+  console.log('wanssid trigered');
+  iwScan(e.target);
   e.stopPropagation();
 });
 
+/* update WAN form based on what iface is chosen */
 function wanChange(e) {
   switch (e[e.selectedIndex].id) {
     case 'wlan':
       wanwifi.setAttribute('class','show');
-      iwScan();
+//      iwScan();
       break;
     case 'dhcp':
     //  wanaddr.setAttribute('class','hide');
@@ -44,6 +46,61 @@ function wanChange(e) {
       }
     break;
   }
+}
+
+/* get results from iwlist and show in the UI */
+function iwScan(e) {
+  console.log('scanning wifi..');
+  var scan = document.createElement('option');
+  var len = 0;
+  scan.selected = true;
+  scan.disabled = true;
+  scan.style.visibility = 'hidden';
+  scan.id = 'scanning';
+  scan.innerHTML = 'scanning for networks..';
+  if (e.firstChild != scan) {
+    e.insertBefore(scan, e.firstChild);
+  }
+  e.options.length = 1;
+  //e.size = 0;
+
+  function getIwscan() {
+    ajaxReq('POST', '/admin/iwscan', 'null', function(xhr) {
+      var res = JSON.parse(xhr['response']);
+      var aps = res['results'].sort(compSort); /* get APs */
+      len = Object.keys(aps).length;
+      //console.log(len, aps);
+      for (i = 0; i < len; i++) {
+        console.log(aps[i]['ssid']);
+        console.log(document.getElementById(aps[i]['ssid']));
+        if (document.getElementById(aps[i]['ssid'])) {
+          console.log('found ' + aps[i]['ssid'] + ' entry');
+          /* TODO: update existing records */
+        } else {
+          ap = document.createElement('option');
+          ap.id = aps[i]['ssid'];
+          ap.setAttribute('data-quality',  aps[i]['quality']);
+          if (aps[i]['encryption']['enabled']) {
+            ap.setAttribute('data-enc', 'wpa2');
+          } else {
+            ap.setAttribute('data-enc', 'false');
+          }
+          ap.innerHTML = aps[i]['ssid'];
+          e.appendChild(ap);
+        }
+      }
+      if ( len > 0 ) {
+        //e.removeChild(scan);
+        e.options.length = len;
+        scan.innerHTML = 'select a network..';
+        e.selectedIndex=0;
+      } else {
+        console.log('no results, running iwScan again');
+        iwScan()
+      }
+    });
+  }
+  getIwscan();
 }
 
 var submitbtns = document.querySelectorAll('input[type="submit"]');
@@ -70,40 +127,7 @@ function uptimeUpdate() {
 
 var uptime = window.uptimeUpdate();
 
-function iwScan() {
-  function comp(a,b) {
-    if (a.quality < b.quality)
-      return 1;
-    if (a.quality > b.quality)
-      return -1;
-    return 0;
-  }
-  ajaxReq('POST', '/admin/iwscan', 'null', function(xhr) {
-    var res = JSON.parse(xhr['response']);
-    var stas = res['results'].sort(comp);
-    var wanssid = document.getElementById('wanssid');
-    for (var i = 0; i < Object.keys(stas).length; i++) { 
-      var sta;
-      if (sta = document.getElementById(stas[i]['ssid'])) {
-        //console.log('found ' + stas[i]['ssid'] + ' entry');
-      } else {
-        sta = document.createElement('option');
-        sta.id = stas[i]['ssid'];
-        sta.setAttribute('data-quality',  stas[i]['quality']);
-        if (stas[i]['encryption']['enabled']) {
-          sta.setAttribute('data-enc', 'wpa2');
-        } else {
-          sta.setAttribute('data-enc', 'false');
-        }
-        sta.innerHTML = stas[i]['ssid'];
-        wanssid.appendChild(sta);
-      }
-    }
-  });
-}
-
-iwScan()
-
+/* simple XHR */
 function ajaxReq(method, url, data, callback) {
   var xhr = new XMLHttpRequest();
   xhr.open(method, url, true);
@@ -116,4 +140,12 @@ function ajaxReq(method, url, data, callback) {
   }
   xhr.send(data);
 }
-
+  
+/* sort by comparing a & b values */
+function compSort(a,b) {
+  if (a.quality < b.quality)
+     return 1;
+  if (a.quality > b.quality)
+    return -1;
+  return 0;
+}

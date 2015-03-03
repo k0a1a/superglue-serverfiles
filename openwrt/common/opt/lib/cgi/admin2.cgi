@@ -299,7 +299,7 @@ showMesg() {
   fi
   htmlHead "<meta http-equiv='refresh' content='${_TIMEOUT};url=http://${HTTP_HOST}/admin'>"
   _echo "<body>
-  <h1>Superglue server control panel</h1>
+  <h1>Superglue control panel</h1>
   <img src='http://${HTTP_HOST}/resources/img/superglueLogo.png' class='logo'>
   <hr>
   <h2 style='display:inline'>$_TYPE $_MSG</h2>
@@ -524,7 +524,7 @@ _echo "<!-- obnoxious code below, keep your ports tight -->
 <head>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
 <link rel='icon' href='http://${HTTP_HOST}/resources/img/favicon.ico' type='image/x-icon'>
-<title>Superglue server | Control panel</title>
+<title>Superglue | Control panel</title>
 <link rel='stylesheet' type='text/css' href='http://${HTTP_HOST}/resources/admin/admin.css'>
 $@
 </head>"
@@ -587,7 +587,7 @@ wankey=$(doUci get wankey)
 %>
 
 <body>
-  <h1>Superglue server control panel</h1>
+  <h1>Superglue control panel</h1>
   <img src='http://<% _echo "${HTTP_HOST}" %>/resources/img/superglueLogo.png' class='logo'>
 
 <section class='inert'>
@@ -602,7 +602,7 @@ wankey=$(doUci get wankey)
   <div style='display:inline-block;'>
   <select name='wanifname' id='wanifname' style='display:block'>
   <option value='eth0' id='eth' <% ( [[ $wanifname =~ ('eth') ]] && _echo 'selected' ) %> >Wired (WAN port)</option>
-  <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (Wi-Fi)</option>
+  <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (WiFi)</option>
   </select>
   <fieldset id='wanwifi' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
     
