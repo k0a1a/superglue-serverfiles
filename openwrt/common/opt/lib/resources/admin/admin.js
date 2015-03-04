@@ -1,9 +1,13 @@
-var uploadbtn = document.getElementById('uploadbtn');
-var uploadfile = document.getElementById('uploadfile');
-var wanconf = document.getElementById('wanconf');
-var wanssid = document.getElementById('wanssid');
-var wanwifi = document.getElementById('wanwifi');
-var wanaddr = document.getElementById('wanaddr');
+document.addEventListener('DOMContentLoaded', function() {
+
+/* make wanted 'elem' class elements to vars */
+(function() {
+  x = document.getElementsByClassName('elem');
+  for (i = 0; i < x.length; i++ ) {
+    y = x[i].id;
+    y = document.getElementById(x[i].id);
+}
+})();
 
 uploadbtn.addEventListener('change', function () {
   uploadfile.value = this.value.replace(/^.*\\/, "");
@@ -11,14 +15,26 @@ uploadbtn.addEventListener('change', function () {
   uploadfile.setAttribute('size', len);
   var len = uploadfile.offsetWidth;
   uploadbtn.style.width = len + "px";
+  e.stopPropagation();
 });
+
+/* all submit buttons */
+var submitbtns = document.querySelectorAll('input[type="submit"]');
+for (var i=0; i < submitbtns.length; i++){
+  submitbtns[i].addEventListener('click', function(e) {
+  if (e.target.hasAttribute('data-wait')) {
+    e.target.value = e.target.getAttribute('data-wait');
+  } else e.target.value = 'Working, please wait..';
+  e.stopPropagation();
+  }, false);
+}
 
 wanconf.addEventListener('change', function(e) { 
   wanChange(e.target)
+  e.stopPropagation();
 });
 
 wanssid.addEventListener('focus', function(e) {
-  console.log('wanssid trigered');
   iwScan(e.target);
   e.stopPropagation();
 });
@@ -28,7 +44,7 @@ function wanChange(e) {
   switch (e[e.selectedIndex].id) {
     case 'wlan':
       wanwifi.setAttribute('class','show');
-//      iwScan();
+      iwScan(wanssid);
       break;
     case 'dhcp':
     //  wanaddr.setAttribute('class','hide');
@@ -51,87 +67,52 @@ function wanChange(e) {
 /* get results from iwlist and show in the UI */
 function iwScan(e) {
   console.log('scanning wifi..');
-  var scan = document.createElement('option');
-  var len = 0;
-  scan.selected = true;
-  scan.disabled = true;
-  scan.style.visibility = 'hidden';
-  scan.id = 'scanning';
-  scan.innerHTML = 'scanning for networks..';
-  if (e.firstChild != scan) {
-    e.insertBefore(scan, e.firstChild);
-  }
-  e.options.length = 1;
-  //e.size = 0;
-
-  function getIwscan() {
-    ajaxReq('POST', '/admin/iwscan', 'null', function(xhr) {
-      var res = JSON.parse(xhr['response']);
-      var aps = res['results'].sort(compSort); /* get APs */
-      len = Object.keys(aps).length;
-      //console.log(len, aps);
-      for (i = 0; i < len; i++) {
-        console.log(aps[i]['ssid']);
-        console.log(document.getElementById(aps[i]['ssid']));
-        if (document.getElementById(aps[i]['ssid'])) {
-          console.log('found ' + aps[i]['ssid'] + ' entry');
-          /* TODO: update existing records */
-        } else {
-          ap = document.createElement('option');
-          ap.id = aps[i]['ssid'];
-          ap.setAttribute('data-quality',  aps[i]['quality']);
-          if (aps[i]['encryption']['enabled']) {
-            ap.setAttribute('data-enc', 'wpa2');
-          } else {
-            ap.setAttribute('data-enc', 'false');
-          }
-          ap.innerHTML = aps[i]['ssid'];
-          e.appendChild(ap);
-        }
-      }
-      if ( len > 0 ) {
-        //e.removeChild(scan);
-        e.options.length = len;
-        scan.innerHTML = 'select a network..';
-        e.selectedIndex=0;
+  var scan_el;
+  if (e.firstChild != document.getElementById('scan')) {
+    scan_el = document.createElement('option');
+    scan_el.selected = true;
+    scan_el.disabled = true;
+    //scan_el.style.visibility = 'hidden';
+    scan_el.id = 'scan';
+    e.insertBefore(scan_el, e.firstChild);
+  } else scan_el = document.getElementById('scan');
+  scan_el.textContent = 'scanning for networks..';
+  ajaxReq('POST', '/admin/iwscan', 'null', function(xhr) {
+    var res = JSON.parse(xhr['response']);
+    var aps = res['results'].sort(compSort); /* get APs */
+    aps_num = Object.keys(aps).length;
+    for (i = 0; i < aps_num; i++) {
+      if (document.getElementById(aps[i]['ssid'])) {
+        //console.log('found ' + aps[i]['ssid'] + ' entry');
+        /* TODO: update existing records */
       } else {
-        console.log('no results, running iwScan again');
-        iwScan()
+        ap = document.createElement('option');
+        ap.id = aps[i]['ssid'];
+        ap.setAttribute('data-quality',  aps[i]['quality']);
+        if (aps[i]['encryption']['enabled']) {
+          ap.setAttribute('data-enc', 'wpa2');
+        } else {
+          ap.setAttribute('data-enc', 'false');
+        }
+        ap.innerHTML = aps[i]['ssid'];
+        e.appendChild(ap);
       }
-    });
-  }
-  getIwscan();
+    }
+    scan_el.textContent = 'select a network..';
+    if (! aps_num) {
+      scan_el.textContent = 'no scan results..';
+      console.log('no scan results');
+    }
+  });
+  scan_el.selected = 1;
+  return
 }
 
-var submitbtns = document.querySelectorAll('input[type="submit"]');
-for (var i=0; i < submitbtns.length; i++){
-  submitbtns[i].addEventListener('click', function(e) {
-  if (e.target.hasAttribute('data-wait')) {
-    e.target.value = e.target.getAttribute('data-wait');
-  } else e.target.value = 'Working, please wait..';
-  e.stopPropagation();
-  }, false);
-}
-
-/* update uptime output */
-function uptimeUpdate() {
-  function run() {
-    ajaxReq('POST', '/admin/uptime', 'null', function(xhr) {
-      if (xhr['response'] != '') {
-        document.getElementById('uptime').innerHTML = xhr['response'];
-      }
-    }); 
-  }
-  return setInterval(run, 5000);
-}
-
-var uptime = window.uptimeUpdate();
-
-/* simple XHR */
+/* v simple XHR */
 function ajaxReq(method, url, data, callback) {
   var xhr = new XMLHttpRequest();
   xhr.open(method, url, true);
-  xhr.onerror = function() { clearInterval(uptime) }
+  xhr.onerror = function() { clearInterval(uptime); console.log('network error, dying'); return; }
   xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4 && xhr.status == 200) { 
@@ -140,8 +121,23 @@ function ajaxReq(method, url, data, callback) {
   }
   xhr.send(data);
 }
-  
-/* sort by comparing a & b values */
+ 
+/* 
+   update uptime output
+   we just run ahead
+                        */
+var uptime = (function uptimeUpdate() {
+  function run() {
+    ajaxReq('POST', '/admin/uptime', 'null', function(xhr) {
+      if (xhr['response'] != '') {
+        document.getElementById('uptime').textContent = xhr['response'];
+      }
+    }); 
+  }
+  return setInterval(run, 5000);
+})();
+ 
+/* sort by comparing a and b */
 function compSort(a,b) {
   if (a.quality < b.quality)
      return 1;
@@ -149,3 +145,5 @@ function compSort(a,b) {
     return -1;
   return 0;
 }
+
+});

@@ -326,7 +326,7 @@ updateFw() {
   _FWFILE="${_TMP}/fwupload.bin"
   _OUT="$(/sbin/sysupgrade -T $_FWFILE 2>&1)"
   _ERR=$?
-  [[ $_ERR -gt 0 ]] && showMesg "Firmware upgrade failed!\n$_OUT"
+  [[ $_ERR -gt 0 ]] && showMesg "This is not a firmware!" 10 "$_OUT -"
   ## using dtach to prevent sysupgrade getting killed
   runSuid "dtach -n -zE $_SCRIPTS/fw-upgrade.sh $_FWFILE"
   showMesg 'Firmware upgrade is in progress..' '120' 'Device needs to reboot -'
@@ -522,10 +522,13 @@ _echo "<!-- obnoxious code below, keep your ports tight -->
 <!doctype html>
 <html>
 <head>
-<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
-<link rel='icon' href='http://${HTTP_HOST}/resources/img/favicon.ico' type='image/x-icon'>
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<meta http-equiv='Cache-Control' content='no-cache, no-store, must-revalidate' />
+<meta http-equiv='Pragma' content='no-cache' />
+<meta http-equiv='Expires' content='0' />
+<link rel='icon' href='http://${HTTP_HOST}/resources/img/favicon.ico' type='image/x-icon' />
 <title>Superglue | Control panel</title>
-<link rel='stylesheet' type='text/css' href='http://${HTTP_HOST}/resources/admin/admin.css'>
+<link rel='stylesheet' type='text/css' href='http://${HTTP_HOST}/resources/admin/admin.css' />
 $@
 </head>"
 }
@@ -597,16 +600,16 @@ wankey=$(doUci get wankey)
 
 <section>
   <h2>Internet connection:</h2>
-  <form method='post' action='/admin/wan' name='wan' id='wanconf'>
+  <form method='post' action='/admin/wan' name='wan' class='elem' id='wanconf'>
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>
   <select name='wanifname' id='wanifname' style='display:block'>
   <option value='eth0' id='eth' <% ( [[ $wanifname =~ ('eth') ]] && _echo 'selected' ) %> >Wired (WAN port)</option>
   <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (WiFi)</option>
   </select>
-  <fieldset id='wanwifi' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
+  <fieldset id='wanwifi' class='elem' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
     
-  <select name='wanssid' id='wanssid' style='display:block'>
+  <select name='wanssid' id='wanssid' class='elem' style='display:block'>
   <% if [[ -z $wanssid ]]; then
     _echo '<option disabled>choose network..</option>'
   else
@@ -625,7 +628,7 @@ wankey=$(doUci get wankey)
   <option value='dhcp' name='dhcp' id='dhcp' <% ([[ $wanproto == 'dhcp' ]] && _echo 'selected') %>>Automatic (DHCP)</option>
   <option value='static' name='stat' id='stat' <% ([[ $wanproto == 'static' ]] && _echo 'selected') %>>Manual (Static IP)</option>
   </select>
-  <fieldset id='wanaddr' >
+  <fieldset id='wanaddr' class='elem'>
   <input type='text' name='wanipaddr' id='wanipaddr' value='<% _echo $wanipaddr %>' <% ( [[ $wanproto =~ ('dhcp') ]] && _echo "readonly" ) %> placeholder='ip address'>
   <input type='text' name='wangw' id='wangw' value='<% _echo $wangw %>' <% ( [[ $wanproto =~ ('dhcp') ]] && _echo "readonly" ) %> placeholder='gateway/router'>
   <input type='text' name='wandns' id='wandns' value='<% _echo $wandns %>' <% ( [[ $wanproto =~ ('dhcp') ]] && _echo "readonly" ) %> placeholder='dns server'>
@@ -740,8 +743,8 @@ wankey=$(doUci get wankey)
   <h2>Firmware upgrade:</h2>
   <form method='post' action='/admin/updatefw' enctype='multipart/form-data'>
   <div id='uploadbox'>
-    <input id='uploadfile' placeholder='Select a file..' disabled='disabled'>
-    <input id='uploadbtn' name='fwupload' type='file'>
+    <input id='uploadfile' placeholder='Select a file..' class='elem' disabled='disabled'>
+    <input id='uploadbtn' class='elem' name='fwupload' type='file'>
   </div>
     <input type='submit' value='Upload' data-wait='Uploading, do NOT interrupt!'>
   </form>
