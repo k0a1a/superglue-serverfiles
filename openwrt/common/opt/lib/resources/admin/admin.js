@@ -1,20 +1,31 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-/* make wanted 'elem' class elements to vars */
+/* make wanted 'elem' class elements to array or vars */
+var el = [];
 (function() {
   x = document.getElementsByClassName('elem');
   for (i = 0; i < x.length; i++ ) {
-    y = x[i].id;
-    y = document.getElementById(x[i].id);
-}
+    el_id = x[i].id;
+    el.push(el_id);
+    el[el_id] = document.getElementById(el_id);
+  }
 })();
 
-uploadbtn.addEventListener('change', function () {
-  uploadfile.value = this.value.replace(/^.*\\/, "");
-  var len = uploadfile.value.length - 7;
-  uploadfile.setAttribute('size', len);
-  var len = uploadfile.offsetWidth;
-  uploadbtn.style.width = len + "px";
+/*
+var uploadbtn = document.getElementById('uploadbtn');
+var uploadfile = document.getElementById('uploadfile');
+var wanconf = document.getElementById('wanconf');
+var wanssid = document.getElementById('wanssid');
+var wanwifi = document.getElementById('wanwifi');
+var wanaddr = document.getElementById('wanaddr');
+*/
+
+el['uploadbtn'].addEventListener('change', function (e) {
+  el['uploadfile'].value = this.value.replace(/^.*\\/, "");
+  var len = el['uploadfile'].value.length - 7;
+  el['uploadfile'].setAttribute('size', len);
+  var len = el['uploadfile'].offsetWidth;
+  el['uploadbtn'].style.width = len + "px";
   e.stopPropagation();
 });
 
@@ -29,13 +40,20 @@ for (var i=0; i < submitbtns.length; i++){
   }, false);
 }
 
-wanconf.addEventListener('change', function(e) { 
+el['wanconf'].addEventListener('change', function(e) { 
   wanChange(e.target)
   e.stopPropagation();
 });
 
-wanssid.addEventListener('focus', function(e) {
-  iwScan(e.target);
+el['wanssid'].addEventListener('focus', function(e) {
+  if (e.target.length == 1) {
+    iwScan(e.target);
+    e.target.blur();
+    getFirstchild(e.target).blur();
+    getFirstchild(e.target).style.display = 'none';
+  } else {
+    iwScan(e.target);
+  }
   e.stopPropagation();
 });
 
@@ -43,22 +61,22 @@ wanssid.addEventListener('focus', function(e) {
 function wanChange(e) {
   switch (e[e.selectedIndex].id) {
     case 'wlan':
-      wanwifi.setAttribute('class','show');
-      iwScan(wanssid);
+      el['wanwifi'].setAttribute('class','show');
+      //iwScan(el['wanssid']);
       break;
     case 'dhcp':
     //  wanaddr.setAttribute('class','hide');
-      for (var i = 0; i < wanaddr.children.length; i++) {
-        wanaddr.children[i].setAttribute('readonly', true);
+      for (var i = 0; i < el['wanaddr'].children.length; i++) {
+        el['wanaddr'].children[i].setAttribute('readonly', true);
       }
       break;
     case 'eth':
-      wanwifi.setAttribute('class','hide');
+      el['wanwifi'].setAttribute('class','hide');
       break
     case 'stat':
     //  wanaddr.setAttribute('class','show');
-      for (var i = 0; i < wanaddr.children.length; i++) {
-        wanaddr.children[i].removeAttribute('readonly');
+      for (var i = 0; i < el['wanaddr'].children.length; i++) {
+        el['wanaddr'].children[i].removeAttribute('readonly');
       }
     break;
   }
@@ -67,34 +85,33 @@ function wanChange(e) {
 /* get results from iwlist and show in the UI */
 function iwScan(e) {
   console.log('scanning wifi..');
-  var scan_el;
-  if (e.firstChild != document.getElementById('scan')) {
+  if (getFirstchild(e).id != 'scan') {
     scan_el = document.createElement('option');
     scan_el.selected = true;
     scan_el.disabled = true;
-    //scan_el.style.visibility = 'hidden';
     scan_el.id = 'scan';
-    e.insertBefore(scan_el, e.firstChild);
   } else scan_el = document.getElementById('scan');
   scan_el.textContent = 'scanning for networks..';
+  scan_el.selected = 1;
   ajaxReq('POST', '/admin/iwscan', 'null', function(xhr) {
-    var res = JSON.parse(xhr['response']);
-    var aps = res['results'].sort(compSort); /* get APs */
+    res = JSON.parse(xhr['response']);
+    aps = res['results'].sort(compSort); /* get APs */
     aps_num = Object.keys(aps).length;
     for (i = 0; i < aps_num; i++) {
-      if (document.getElementById(aps[i]['ssid'])) {
+      // check if AP is already in the DOM
+      if (document.getElementById(aps[i]['bssid'])) {
         //console.log('found ' + aps[i]['ssid'] + ' entry');
         /* TODO: update existing records */
       } else {
         ap = document.createElement('option');
-        ap.id = aps[i]['ssid'];
+        ap.id = aps[i]['bssid'];
         ap.setAttribute('data-quality',  aps[i]['quality']);
         if (aps[i]['encryption']['enabled']) {
           ap.setAttribute('data-enc', 'wpa2');
         } else {
           ap.setAttribute('data-enc', 'false');
         }
-        ap.innerHTML = aps[i]['ssid'];
+        ap.textContent = aps[i]['ssid'] ? aps[i]['ssid'] : '[hidden network]';
         e.appendChild(ap);
       }
     }
@@ -104,7 +121,9 @@ function iwScan(e) {
       console.log('no scan results');
     }
   });
-  scan_el.selected = 1;
+  e.blur();
+  // just focusing someother element 
+  document.getElementById('wansubmit').focus();
   return
 }
 
@@ -144,6 +163,15 @@ function compSort(a,b) {
   if (a.quality > b.quality)
     return -1;
   return 0;
+}
+
+/* because firstChild returns whitespaces too */
+function getFirstchild(n) {
+  x = n.firstChild;
+  while (x.nodeType != 1) {
+    x = x.nextSibling;
+  }
+  return x;
 }
 
 });

@@ -586,7 +586,7 @@ wanuptime=${wan[4]}
 wanssid=$(doUci get wanssid)
 wankey=$(doUci get wankey)
 
-#logThis $stor
+logThis $wanifname
 %>
 
 <body>
@@ -607,11 +607,11 @@ wankey=$(doUci get wankey)
   <option value='eth0' id='eth' <% ( [[ $wanifname =~ ('eth') ]] && _echo 'selected' ) %> >Wired (WAN port)</option>
   <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (WiFi)</option>
   </select>
-  <fieldset id='wanwifi' class='elem' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show'" || _echo "class='hide'" ) %>>
+  <fieldset id='wanwifi' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show elem'" || _echo "class='hide elem'" ) %>>
     
   <select name='wanssid' id='wanssid' class='elem' style='display:block'>
   <% if [[ -z $wanssid ]]; then
-    _echo '<option disabled>choose network..</option>'
+    _echo "<option id='scan' disabled>select a network..</option>"
   else
     _echo "<option id=$wanssid selected>$wanssid</option>"
   fi %>
