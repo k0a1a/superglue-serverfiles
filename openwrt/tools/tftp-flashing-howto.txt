@@ -1,0 +1,14 @@
+from OpenWRT wiki http://wiki.openwrt.org/toh/tp-link/tl-wr710n
+
+- connect to the device with FTDI
+- type 'tpl' at boot time to get U-boot console
+- in console type
+    setenv ipaddr 192.168.1.1
+    setenv serverip 192.168.1.1
+    tftpboot 0x81000000 <firmware-file.bin>
+    erase 0x9f020000 +0x7C0000
+    cp.b 0x81000000 0x9f020000 0x7C0000
+    bootm 9f020000
+
+the same goes for restoring to the original fw, it is available here
+wr710vn1-130419-orig.bin

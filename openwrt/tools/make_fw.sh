@@ -30,8 +30,8 @@ _BUILDS="$_PWD/../../../sg-builds"
 set +e
 
 ## dirs with platform specific files
-#_TARGETS='DIR505A1 TLWR710 WRT160NL'
-_TARGETS='TLWR710'
+_TARGETS='DIR505A1 TLWR710' ##WRT160NL
+#_TARGETS='TLWR710'
 
 ## dir with common files
 _COMMON='common'
