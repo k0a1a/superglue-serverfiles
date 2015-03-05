@@ -58,6 +58,16 @@ input[type='submit'] {
   cursor: pointer;
 }
 
+input[type='checkbox'] {
+  width: 26px;
+  height: 30px;
+  display: inline-block ! important;
+}
+
+label {
+  vertical-align: super;
+}
+
 input[type='button'],
 input[type='submit'],
 input[type='reset'],

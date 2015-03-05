@@ -93,6 +93,7 @@ runSuid() {
 }
 
 getQueryFile() {
+  setQueryVars
   local _UPLD="${HASERL_fwupload_path##*/}"
   logThis "'multipart': decoding stream"
   mv "$_TMP/$_UPLD" "$_TMP/fwupload.bin" 2>/dev/null || _ERR=$?
@@ -322,13 +323,16 @@ showMesg() {
 }
 
 updateFw() {
-  logThis "updating fw"
+  _FWRESET=$POST_fwreset
   _FWFILE="${_TMP}/fwupload.bin"
   _OUT="$(/sbin/sysupgrade -T $_FWFILE 2>&1)"
   _ERR=$?
+  logThis $_ERR
   [[ $_ERR -gt 0 ]] && showMesg "This is not a firmware!" 10 "$_OUT -"
+  logThis 'updating fw'
+  [[ $_FWRESET == 'on' ]] && logThis 'fw reset requested'
   ## using dtach to prevent sysupgrade getting killed
-  runSuid "dtach -n -zE $_SCRIPTS/fw-upgrade.sh $_FWFILE"
+  runSuid "dtach -n -zE $_SCRIPTS/fw-upgrade.sh $_FWFILE $_FWRESET"
   showMesg 'Firmware upgrade is in progress..' '120' 'Device needs to reboot -'
 }
 
@@ -586,7 +590,6 @@ wanuptime=${wan[4]}
 wanssid=$(doUci get wanssid)
 wankey=$(doUci get wankey)
 
-logThis $wanifname
 %>
 
 <body>
@@ -746,7 +749,11 @@ logThis $wanifname
     <input id='uploadfile' placeholder='Select a file..' class='elem' disabled='disabled'>
     <input id='uploadbtn' class='elem' name='fwupload' type='file'>
   </div>
-    <input type='submit' value='Upload' data-wait='Uploading, do NOT interrupt!'>
+  <div style='display:inline-block;'>
+    <input type='checkbox' name='fwreset' id='fw-resetbox' />
+    <label for='fw-resetbox'>Reset all settings</label>
+  </div>
+  <input type='submit' value='Upload' data-wait='Uploading, do NOT interrupt!'>
   </form>
   <span class='help'>help</span>
 </section>
