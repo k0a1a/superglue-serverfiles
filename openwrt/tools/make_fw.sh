@@ -37,7 +37,6 @@ _TARGETS='DIR505A1 TLWR710' ##WRT160NL
 _COMMON='common'
 
 _SG_REVISION="$_PWD/superglue.revision"
-
 if [[ -e $_SG_REVISION ]]; then
   source $_SG_REVISION
 else
