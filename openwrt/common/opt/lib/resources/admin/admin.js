@@ -90,6 +90,7 @@ function iwScan(e) {
     scan_el.selected = true;
     scan_el.disabled = true;
     scan_el.id = 'scan';
+    e.insertBefore(scan_el, e.firstChild);
   } else scan_el = document.getElementById('scan');
   scan_el.textContent = 'scanning for networks..';
   scan_el.selected = 1;
@@ -99,12 +100,13 @@ function iwScan(e) {
     aps_num = Object.keys(aps).length;
     for (i = 0; i < aps_num; i++) {
       // check if AP is already in the DOM
-      if (document.getElementById(aps[i]['bssid'])) {
+      if (document.getElementById(aps[i]['ssid'])) {
         //console.log('found ' + aps[i]['ssid'] + ' entry');
         /* TODO: update existing records */
       } else {
         ap = document.createElement('option');
-        ap.id = aps[i]['bssid'];
+        ap.id = aps[i]['ssid'];
+        ap.setAttribute('data-bssid',  aps[i]['bssid']);
         ap.setAttribute('data-quality',  aps[i]['quality']);
         if (aps[i]['encryption']['enabled']) {
           ap.setAttribute('data-enc', 'wpa2');
@@ -123,7 +125,7 @@ function iwScan(e) {
   });
   e.blur();
   // just focusing someother element 
-  document.getElementById('wansubmit').focus();
+  // document.getElementById('wansubmit').focus();
   return
 }
 
