@@ -113,10 +113,10 @@ for _TARGET in $_TARGETS; do
   echo -e "\nbuilding $_TARGET image!\n"
   sleep 2
 
-  ## package stash, might need these:
-  # kmod-fs-vfat kmod-fs-btrfs btrfs-progs
+  ## currently unused packages
+  # kmod-fs-vfat kmod-fs-btrfs btrfs-progs kmod-fs-ext4  
 
-  make image PROFILE=$_TARGET PACKAGES="bash gawk sudo procps-ps openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid kmod-fs-ext4 block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 coreutils-sha1sum rpcd-mod-iwinfo dtach" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
+  make image PROFILE=$_TARGET PACKAGES="bash gawk openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 coreutils-sha1sum rpcd-mod-iwinfo dtach sudo procps-ps uhttpd uhttpd-mod-ubus openvpn-openssl" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
     echo -e "\nFAILED to build $_TARGET image :/ (are we missing packages?) \n"
@@ -153,19 +153,8 @@ if [[ $_ERR -eq 0 ]]; then
   echo -e "\nBuilding SUCCEEDED! :)\n"
 
   ## create symlinks to the latest
-  [[ -e $_BUILDS/latest ]] && touch $_BUILDS/latest || mkdir $_BUILDS/latest 
-  for _TARGET in $_TARGETS; do
-    [[ -e $_BUILDS/latest/$_TARGET ]] && rm -f $_BUILDS/latest/$_TARGET/* || mkdir $_BUILDS/latest/$_TARGET
-    #set -o xtrace
-    _FACTORY="$_BUILDS"/latest/"$_TARGET"/$_FILENAME'_initial.bin'
-    _SYSUPGRADE=$_BUILDS/latest/"$_TARGET"/$_FILENAME'_upgrade.bin'
-
-    ln -sf $_BIN_DIR/$_FILENAME'_initial.bin' $_FACTORY &&
-      echo -e "$_FACTORY\n"
-    ln -sf $_BIN_DIR/$_FILENAME'_upgrade.bin' $_SYSUPGRADE &&
-      echo -e "$_SYSUPGRADE\n"
-  done
-
+  [[ -h $_BUILDS/latest ]] || rm -rf $_BUILDS/latest
+  ln -sf $_BUILDS/$_VERSION -T $_BUILDS/latest
 else
   echo -e "\nBuild FAILED.. :/\n"
 fi
