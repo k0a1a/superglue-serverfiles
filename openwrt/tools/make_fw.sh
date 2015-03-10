@@ -62,6 +62,9 @@ echo $_OPENWRT > $_OPENWRT_REVISION
 
 _VERSION="$_MAJOR"."$_MINOR"-"$_SUFFIX"
 
+## define how firmware files are named
+_FN_PREFIX='superglue-firmware'
+
 echo -e "Build ver: $_VERSION
 Targets: $_TARGETS\n"
 
@@ -123,13 +126,11 @@ for _TARGET in $_TARGETS; do
     exit 1
   fi
 
-  ## define how firmware files are named
-  _FN_PREFIX='superglue-firmware'
   _FILENAME="$_FN_PREFIX"_"$_VERSION"_"$(echo $_TARGET | tr [:upper:] [:lower:])"
 
-  ln -s $_BIN_DIR/openwrt/openwrt-*-factory.bin $_BIN_DIR/$_FILENAME'_initial.bin' &&
-  ln -s $_BIN_DIR/openwrt/openwrt-*-sysupgrade.bin $_BIN_DIR/$_FILENAME'_upgrade.bin' &&
-  cd $_BIN_DIR &&
+  cd $_BIN_DIR
+  ln -s ./openwrt/openwrt-*-factory.bin ./$_FILENAME'_initial.bin' &&
+  ln -s ./openwrt/openwrt-*-sysupgrade.bin ./$_FILENAME'_upgrade.bin' &&
   md5sum *.bin > md5sums
   cd -
 
