@@ -35,12 +35,14 @@ findMount() {
   [[ $_USBMNT ]] || return 1
 }
 
-## partitions layout for sfdisk
-## /dev/sdx1 64K, fat32
-## TODO: define swap size according to ram
-## /dev/sdx2 32M, swap v1 
-## /dev/sdx3 rest of the disk, linux partition
-_PARTITIONS="unit: sectors
+usbPart() {
+
+  ## partitions layout for sfdisk
+  ## /dev/sdx1 64K, fat32
+  ## TODO: define swap size according to ram
+  ## /dev/sdx2 32M, swap v1 
+  ## /dev/sdx3 rest of the disk, linux partition
+  _PARTITIONS="unit: sectors
 
 ${_DEV}1 : start=     2048, size=      128, Id= b
 ${_DEV}2 : start=     4096, size=    65536, Id=82
@@ -48,8 +50,8 @@ ${_DEV}3 : start=    69632, size=         , Id=83
 ${_DEV}4 : start=        0, size=        0, Id= 0
 "
 
-## base64 encoded gzip'ed image of /dev/sdx1 FAT32 partition
-_FAT_README='H4sICC5ykVQAA3NkYjEuZGQA7d3PaxNpGMDxp1VQI1FxYcWD+FRB8DJp68KCiFBxXAS1tUn8gSC8
+  ## base64 encoded gzip'ed image of /dev/sdx1 FAT32 partition
+  _FAT_README='H4sICC5ykVQAA3NkYjEuZGQA7d3PaxNpGMDxp1VQI1FxYcWD+FRB8DJp68KCiFBxXAS1tUn8gSC8
 7bxtZ5vMhJm3pgVxvSzsSezJi3+BePQmiAevPfof2FNFPHra7DtNo1VUSgWL7veTvDzv+z7zPplM
 YCAE8q6cut+cncqDKeOkf3uf9Ev/XXnXJ6f9Q3bKqrty/N7DQ2+q9bFw/I8L9VD13EhtaFhV9xx+
 duP24yPP3e4rT/Y83SFL+26uvB1+tfTr0sGVf2szca7+maROjU6kqTMTDatRnM8GqmMNa3KrcZLb
@@ -63,45 +65,42 @@ Mk2cTVyRaKSTxtlI00SN5rZlMj/UMy47V1U/cLGL00R6O65X51o2m27MWY2M88e7NDPTVs6O6qXR
 mtaroY6O68iFWjj+ubmBAf16oXKpVC5t6gyLheXSjHOtk5VK3isexI6N3AEAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwJb5D53OGNgAAAEA'
 
-if ! findUsbstor; then
-  echo 'USB device not found'
-  exit 1
-fi
-
-if findMount; then
-  #umount -f ${_USBDEV}[1-9] 2>&1
-  echo 'unmounting'
-  umount -f $_USBMNT 2>&1
-  if [[ $? -gt 0 ]]; then
-    echo 'error unmounting'
+  if ! findUsbstor; then
+    echo 'USB device not found'
     exit 1
   fi
-fi
 
-swapoff -a &>/dev/null
+  if findMount; then
+    echo 'unmounting'
+    umount -f $_USBMNT 2>&1
+    if [[ $? -gt 0 ]]; then
+      echo 'error unmounting'
+      exit 1
+    fi
+  fi
 
-sfdisk -D -f -q $_USBDEV <<< "$_PARTITIONS"
-if [[ $? -gt 0 ]]; then
-  echo 'error making partitions'
-  exit 1
-fi
+  swapoff -a &>/dev/null
+  sfdisk -D -f -q $_USBDEV <<< "$_PARTITIONS"
 
-(echo -n "$_FAT_README" | base64 -d | gunzip -c > ${_USBDEV}1)
-if [[ $? -gt 0 ]]; then
-  echo 'error cloning FAT readme partition'
-  exit 1
-fi
+  if [[ $? -gt 0 ]]; then
+    echo 'error making partitions'
+    exit 1
+  fi
+  (echo -n "$_FAT_README" | base64 -d | gunzip -c > ${_USBDEV}1)
+  if [[ $? -gt 0 ]]; then
+    echo 'error cloning FAT readme partition'
+    exit 1
+  fi
+  mkswap ${_USBDEV}2
+  if [[ $? -gt 0 ]]; then
+    echo 'error making swap'
+    exit 1
+  fi
+  mkfs.btrfs -L sg-data ${_USBDEV}3
+  if [[ $? -gt 0 ]]; then
+    echo 'error making Btrfs'
+    exit 1
+  fi
 
-mkswap ${_USBDEV}2
-if [[ $? -gt 0 ]]; then
-  echo 'error making swap'
-  exit 1
-fi
+}
 
-mkfs.btrfs -L sg-data ${_USBDEV}3
-if [[ $? -gt 0 ]]; then
-  echo 'error making Btrfs'
-  exit 1
-fi
-
-exit 0

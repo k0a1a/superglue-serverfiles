@@ -1,3 +1,6 @@
 ## 
 
+/opt/lib/scripts/sg-data-mount.sh &
+/opt/lib/scripts/sg-data-dirs.sh &
+
 exit 0

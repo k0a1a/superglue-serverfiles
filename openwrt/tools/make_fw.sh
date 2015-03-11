@@ -53,7 +53,7 @@ let _MINOR++
 _OPENWRT_REVISION="$_PWD/openwrt.revision"
 
 ## browser extension (if any)
-_EXT_SRC="$_PWD/../../editor/build/firefox/superglue.xpi"
+_EXT_SRC="$_PWD/../../editor/build/superglue-firefox.xpi"
 
 ## get OpenWRT revision
 _OPENWRT=$(fgrep -m1 'REVISION:=' $_IMAGEBUILDER/include/version.mk || echo 'r00000')
@@ -117,9 +117,9 @@ for _TARGET in $_TARGETS; do
   sleep 2
 
   ## currently unused packages
-  # kmod-fs-vfat kmod-fs-btrfs btrfs-progs kmod-fs-ext4  
+  # kmod-fs-vfat kmod-fs-btrfs btrfs-progs kmod-fs-ext4 sudo 
 
-  make image PROFILE=$_TARGET PACKAGES="bash gawk openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-setenv blkid block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 coreutils-sha1sum rpcd-mod-iwinfo dtach sudo procps-ps uhttpd uhttpd-mod-ubus openvpn-openssl" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
+  make image PROFILE=$_TARGET PACKAGES="bash gawk openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-proxy lighttpd-mod-setenv blkid block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 coreutils-sha1sum rpcd-mod-iwinfo procps-ps uhttpd uhttpd-mod-ubus openvpn-openssl dtach" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
   _ERR=$?
   if [[ $_ERR -gt 0 ]]; then
     echo -e "\nFAILED to build $_TARGET image :/ (are we missing packages?) \n"

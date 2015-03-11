@@ -3,7 +3,7 @@
 ifaceStat() {
   . /usr/share/libubox/jshn.sh
   local _IFACE=$1
-  local _STATUS="$(runSuid ubus call network.interface.$_IFACE status 2>/dev/null)"
+  local _STATUS="$(ubus call network.interface.$_IFACE status 2>/dev/null)"
   if [[ "$_STATUS" != "" ]]; then
     local State=""
     local Iface=""

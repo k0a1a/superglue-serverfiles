@@ -228,6 +228,11 @@ span.help:active::after
   background-color: #ddd;
 } */
 
+span#timeout {
+  display: inline-block;
+  padding-left: 20px;
+}
+
 input[type="text"]:read-only { 
   background-color: #ddd;
   cursor: default;
