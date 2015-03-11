@@ -36,7 +36,7 @@ logThis() {
   local _TIME; printf -v _TIME '%(%d.%m.%Y %H:%M:%S)T' -1
   printf '%b\n' "$_TIME  $_TYPE ${@} " >> "$_LOG"
   [[ "$_DEBUG" -gt 1 ]] && printf '%b\n' "[verbose] $_TYPE ${1}"
-#  exit 0
+  return $_ERR
 }
 
 headerPrint() {
@@ -106,17 +106,14 @@ validIp() {
 pwdChange() {
   local _USER='admin'
   local _REALM='superglue'
+  [[ -e $_PWDFILE ]] || showMesg 'Password file not found'
   [[ -z "${POST_pwd##$POST_pwdd}" ]] || showMesg 'Passwords did not match'
   [[ ${#POST_pwd} -ge 6 ]] || showMesg 'Password must be at least 6 characters long'
-  local _HASH=$(printf '%s' "$_USER:$_REALM:${POST_pwd}" | md5sum | cut -b -32)
-  _OUT=$(printf '%b' "${POST_pwd}\n${POST_pwd}\n" | passwd root 2>&1) &&
-  _OUT=$(printf '%b' "$_USER:$_REALM:$_HASH\n" > $_PWDFILE 2>&1)
-  _ERR=$?
-  if [[ $_ERR -gt 0 ]]; then
-    showMesg 'Password change failed!' '5' "$_OUT -"
-  else
-    showMesg 'Password is changed' '2'
-  fi
+  local _HASH=$(printf '%s' "$_USER:$_REALM:${POST_pwd}" | md5sum | cut -b -32) &&
+  printf '%b' "${POST_pwd}\n${POST_pwd}\n" | passwd root &&
+  printf '%b' "$_USER:$_REALM:$_HASH\n" > $_PWDFILE &&
+  showMesg 'Password is changed' '2' ||
+  showMesg 'Password change failed!' '5'
 }
 
 lanAddr() {
@@ -124,9 +121,9 @@ lanAddr() {
   validIp $POST_lanipaddr || showMesg 'Not valid network address'
   doUci set lanipaddr $POST_lanipaddr &&
   doUci commit network &&
-  dtach -n -zE $_SCRIPTS/net-restart.sh &&
+  dtach -n -zE $_SCRIPTS/net-restart.sh &>/dev/null &&
   showMesg 'New network address is set' '30' "Your server is now accessible under <a href='http://superglue.local/admin'>http://superglue.local/admin</a>" ||
-  { _ERR=1; showMesg 'Setting network address failed'; }
+  showMesg 'Setting network address failed'
 }
 
 wanSet() {
@@ -166,20 +163,18 @@ wanSet() {
       doUci set wangw $POST_wangw
       doUci set wandns $POST_wandns
     fi
+
     if [[ $POST_wanifname == 'wlan1' ]]; then
       ssidChange || showMesg 'wanSet: Wireless configuration failed'
     else
-      doUci commit network
-      doUci commit wireless
-      dtach -n -zE $_SCRIPTS/net-restart.sh
+      doUci commit network &&
+      doUci commit wireless &&
+      dtach -n -zE $_SCRIPTS/net-restart.sh &>/dev/null
     fi
     _ERR=$?
-#    logThis "return: $? ; error: $_ERR"
-    if [[ $_ERR -gt 0 ]]; then
-      showMesg 'Internet connection is being configured' '25' 'check your Internet connection on completion'
-    else
-      showMesg 'Configuring Internet connection failed'
-    fi
+    [[ $_ERR -eq 0 ]] &&
+    showMesg 'Internet connection is being configured' '25' 'check your Internet connection on completion' ||
+    showMesg 'Configuring Internet connection failed' '5'
   fi
 }
 
@@ -205,47 +200,36 @@ ssidChange() {
   #logThis "ssid: $_ssid [$_mode], key: $_key [$_enc]"
   #logThis $POST_wanssid
 
-  if [[ ${#_ssid} -lt 4 ]]; then
-   _ERR=1
-   showMesg 'SSID must be at least 4 characters long'
-  fi
+  [[ ${#_ssid} -ge 3 ]] || showMesg 'SSID must be at least 3 characters long'
+
   doUci set $_p'ssid' "${_ssid}"
-  _ERR=$?
-  [[ $_ERR -gt 0 ]] && showMesg 'New SSID is not set'
 
   if [[ -z $_key ]]; then
     ## if key is empty set encryption to none and remove key
     doUci set $_p'key' && doUci set $_p'enc' 'none'
     _ERR=$?
   else
-    if [[ ${#_key} -lt 8 ]]; then
-     _ERR=1
-      showMesg 'Passphrase must be at least 8 characters long'
-    fi
+    [[ ${#_key} -ge 8 ]] || showMesg 'Passphrase must be at least 8 characters long'
     doUci set $_p'key' "${_key}" && doUci set $_p'enc' "${_enc}"
-    _ERR=$?
-    [[ $_ERR -gt 0 ]] && showMesg 'Passphrase is not set'
   fi
-  [[ $_ERR -gt 0 ]] && showMesg 'ssidChange: Wireless configuration failed'
+  [[ $_ERR -eq 0 ]] || showMesg 'ssidChange: Wireless configuration failed'
   if [[ $POST_iface == 'lan' ]]; then
     if [[ "$(doUci get lanipaddr)" !=  "${POST_lanipaddr}" ]]; then
       logThis 'local IP was changed'
       lanAddr
     fi
   fi
+
   doUci commit wireless
   _ERR=$?
 
-  if [[ $_ERR -gt 0 ]]; then
-    showMesg 'Configuration failed'
-  else
-    dtach -n -zE $_SCRIPTS/net-restart.sh &>/dev/null
-  fi
+  [[ $_ERR -eq 0 ]] &&
+  dtach -n -zE $_SCRIPTS/net-restart.sh &>/dev/null ||
+  showMesg 'Wireless configuration failed' '5'
 
-  if [[ $POST_iface == 'lan' ]]; then
-    showMesg 'Local network configuration is progress' '30' 'check your connection on completion - '
-  fi
-    ## in this case wanSet() handles success message
+  [[ $POST_iface == 'lan' ]] && 
+  showMesg 'Local network configuration is progress' '30' 'check your connection on completion' || return 0
+  ## in this case wanSet() handles success message
 }
 
 showMesg() {
@@ -254,16 +238,11 @@ showMesg() {
   local _TIMEOUT=$2
   local _SUBMSG=$3
   ## if set, global _ERR value prevails 
-#  logThis "return: $_RET , error: $_ERR"
-#  if [[ ! -z $_ERR ]] && [[ $_ERR -ne $_RET ]]; then 
-#    _ERR=$_RET
-#    logThis "forcing _ERR value: $_ERR"
-#  fi
-  _ERR=$_RET
+  [[ $_ERR -gt $_RET ]] && _RET=$_ERR
   _MSG=${_MSG:='Configuration'}
   _TIMEOUT=${_TIMEOUT:='5'}
   _SUBMSG="${_SUBMSG} <span id='timeout'>${_TIMEOUT}</span> seconds to get ready.."
-  if [[ $_ERR -gt 0 ]]; then
+  if [[ $_RET -gt 0 ]]; then
     local _TYPE='ERROR: '
     headerPrint 406
   else
@@ -282,7 +261,7 @@ showMesg() {
   <script type='text/javascript'>(function(e){var t=document.getElementById(e);var n=t.innerHTML;var r=setInterval(function(){if(n==0){t.innerHTML='0';clearInterval(r);return}t.innerHTML=n;n--},1e3)})('timeout')
   </script>
   </html>"
-  exit $_ERR
+  exit $_RET
 }
 
 updateFw() {
@@ -291,9 +270,9 @@ updateFw() {
   { _ERR=$?; rm -rf $_FWFILE; showMesg 'This is not a firmware!' '3' "$_OUT"; }
   [[ $POST_fwreset == 'on' ]] && { _FWRESET='-n'; logThis 'fw reset requested'; }
   ## using dtach to prevent sysupgrade getting killed
-  dtach -n -zE sysupgrade $_FWRESET $_FWFILE >/dev/null &&
+  dtach -n -zE sysupgrade $_FWRESET $_FWFILE 2>&1 &&
   showMesg 'Firmware update is in progress..' '120' 'DO NOT INTERRUPT!' ||
-  { _ERR=$?; rm -rf $_FWFILE; showMesg 'Firmware update failed..' '3' "$_OUT"; }
+  { _ERR=$?; rm -rf $_FWFILE; showMesg 'Firmware update failed..' '3'; }
 }
 
 usbInit() {
@@ -384,12 +363,12 @@ dynDns() {
   for _L in $_DURL
     do case $_L in 
       "${POST_dyndnsname}|"*) IFS='|' _RES=( $_L ); break;; 
-      'ERROR'*) _RES=1; break;;
+      'ERROR'*) _RES=0; break;;
       *) unset _RES;;
     esac;
   done
-  [[ ! $_RES ]] && showMesg 'Domain name is not found' '10' 'Make sure you entered correct domain name -'
-  [[ $_RES -eq 1 ]] && showMesg 'Authentication failed' '10' 'Check your username and password and try again -'
+  [[ $_RES ]] || showMesg 'Domain name is not found' '10' 'Make sure you entered correct domain name -'
+  [[ $_RES -eq 0 ]] || showMesg 'Authentication failed' '10' 'Check your username and password and try again -'
 
   logThis "${_RES[@]}"
 
@@ -398,7 +377,7 @@ dynDns() {
 
   doUci commit  
 
-  showMesg 'DynDNS configuration is in progress..' '10' 'After completion, your URL will become available with in 10-15 minutes -'
+  showMesg 'DynDNS configuration is in progress..' '10' 'After completion, your URL will become available with in 10-15 minutes'
 
 }
 
