@@ -30,12 +30,12 @@ endef
 
 
 define Package/jshon/description
-   jshon - parses, reads and creates JSON
+  jshon - parses, reads and creates JSON
 endef
 
 define Package/jshon/install
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/jshon $(1)/usr/bin/
+  $(INSTALL_DIR) $(1)/usr/bin/
+  $(INSTALL_BIN) $(PKG_BUILD_DIR)/jshon $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,jshon,+jansson))

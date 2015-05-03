@@ -22,7 +22,7 @@ PKG_UNPACK:=$(CP) -r $(PKG_LOCAL_SOURCE_DIR)/* $(PKG_BUILD_DIR)
 
 define Package/jansson
 	SECTION:=jansson
-	CATEGORY:=Superglue
+	CATEGORY:=superglue
 	TITLE:=jansson
 	MAINTAINER:=Superglue
 endef
@@ -30,7 +30,7 @@ endef
 CONFIGURE_ARGS+= LIBS="-Wl,-rpath-link=$(STAGING_DIR)/usr/lib"
 
 define Package/jansson/description
-  jansson - C library for encoding, decoding and manipulating JSON data
+	jansson - C library for encoding, decoding and manipulating JSON data
 endef
 
 define Build/InstallDev
