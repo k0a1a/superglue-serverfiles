@@ -30,8 +30,7 @@ _BUILDS="$_PWD/../../../sg-builds"
 set +e
 
 ## dirs with platform specific files
-_TARGETS='DIR505A1 TLWR710' ##WRT160NL
-#_TARGETS='TLWR710'
+_TARGETS='DIR505A1 TLWR710' #WRT160NL
 
 ## dir with common files
 _COMMON='common'
@@ -53,7 +52,7 @@ let _MINOR++
 _OPENWRT_REVISION="$_PWD/openwrt.revision"
 
 ## browser extension (if any)
-#_EXT_SRC="$_PWD/../../editor/build/superglue-firefox.xpi"
+_EXT_SRC="$_PWD/../../editor/build/superglue-firefox.xpi"
 
 ## get OpenWRT revision
 _OPENWRT=$(fgrep -m1 'REVISION:=' $_IMAGEBUILDER/include/version.mk || echo 'r00000')
