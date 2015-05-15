@@ -1,6 +1,0 @@
-config superglue 'dyndns'
-	option disabled '1'
-	option domain ''
-	option token ''
-	option connect 'auto'
-
