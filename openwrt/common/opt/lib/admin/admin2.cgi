@@ -394,10 +394,12 @@ sgOpenvpn() {
   logThis "enabling SG openvpn"
   if [[ $(doUci get sgopenvpnenable) == '0' ]]; then
     doUci set sgopenvpnenable '1' &&
+    doUci commit openvpn &&
     /etc/init.d/openvpn start &&
     showMesg 'VPN service enabled' '5'
   else
     doUci set sgopenvpnenable '0' &&
+    doUci commit openvpn &&
     /etc/init.d/openvpn stop &&
     showMesg 'VPN service disabled' '5'
   fi

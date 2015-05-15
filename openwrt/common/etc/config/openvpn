@@ -1,6 +1,6 @@
 package openvpn
 
 config openvpn superglue
-	option enabled 0
+	option enable 0
 	option config /etc/openvpn/sgvpn-client.conf
 
