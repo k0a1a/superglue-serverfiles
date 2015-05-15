@@ -128,15 +128,17 @@ for _TARGET in $_TARGETS; do
   _FILENAME="$_FN_PREFIX"_"$_VERSION"_"$(echo $_TARGET | tr [:upper:] [:lower:])"
 
   cd $_BIN_DIR
-  ln -s ./openwrt/openwrt-*-factory.bin ./$_FILENAME'_initial.bin' &&
-  ln -s ./openwrt/openwrt-*-sysupgrade.bin ./$_FILENAME'_upgrade.bin' &&
+  ln -s ./openwrt/openwrt-*-factory.bin ./$_FILENAME'_initial.bin' 
+  ln -s ./openwrt/openwrt-*-sysupgrade.bin ./$_FILENAME'_upgrade.bin'
+  [[ -e ./$_FILENAME'_initial.bin' ]] && [[ -e ./$_FILENAME'_upgrade.bin' ]] &&
   md5sum *.bin > md5sums
+  _ERR=$?
   cd -
 
-  _ERR=$?
   if [[ $_ERR -eq 0 ]]; then 
     echo -e "\n$_TARGET build completed\n"
   else
+    echo -e "\nError making symlinks! Images not built. Were they too large?\n"
     rm -Rf $_BIN_DIR
   fi
 
@@ -150,13 +152,14 @@ done
 if [[ $_ERR -eq 0 ]]; then
   ## if build succeeded bump revision
   echo -e "_MAJOR=$_MAJOR\n_MINOR=$_MINOR\n_SUFFIX=$_SUFFIX" > $_SG_REVISION
-  echo -e "\nBuilding SUCCEEDED! :)\n"
+  echo -e "\n$_TARGET build SUCCEEDED! :)\n"
 
   ## create symlinks to the latest
   [[ -h $_BUILDS/latest ]] || rm -rf $_BUILDS/latest
   ln -sf $_BUILDS/$_VERSION -T $_BUILDS/latest
 else
-  echo -e "\nBuild FAILED.. :/\n"
+  echo -e "\n$_TARGET build FAILED.. :/ \n"
+  sleep 5
 fi
 
 exit $_ERR
