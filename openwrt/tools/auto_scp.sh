@@ -10,7 +10,7 @@ pwd
 CMD='FILE=%f; DEST_FILE=${FILE#*/*/};
 scp $FILE superglue:/$DEST_FILE; 
 if [ $? -eq 0 ]; then 
-  play -q -n synth 0.1 tri 5000.0 gain -15;
+  play -q -n synth 0.1 tri 5000.0 gain -35;
 else
   play -q -n synth 0.5 tri 500.0 gain -10;
 fi' 

@@ -11,6 +11,7 @@ config uhttpd main
 
 	# Server document root
 	option home		/opt/lib
+#	option home		/opt/lib/admin
 
 	# Reject requests from RFC1918 IP addresses
 	# directed to the servers public IP(s).
@@ -41,6 +42,10 @@ config uhttpd main
 
   list index_page "admin2.cgi"
   option error_page "/admin/admin2.cgi"
+
+#  list index_page "uhttpd-dispatch.cgi"
+#  option error_page "/admin/uhttpd-dispatch.cgi"
+
 
 	# List of extension->interpreter mappings.
 	# Files with an associated interpreter can

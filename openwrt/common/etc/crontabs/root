@@ -1,5 +1,5 @@
 ## logrotation
-1 6 * * *	  /sbin/logrotate /www/log/*.log; /etc/init.d/lighttpd reload
+1 6 * * *     /sbin/logrotate /www/log/*.log; /etc/init.d/lighttpd reload
 
 ## dyndns
 */5 * * * *   /opt/lib/scripts/dyndns-update.sh

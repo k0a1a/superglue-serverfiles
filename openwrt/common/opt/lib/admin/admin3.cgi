@@ -42,8 +42,9 @@ logThis() {
 
 headerPrint() {
   case "$1" in
-    200|'') printf '%b' 'Status: 200 OK\r\n';;
+    200|'') printf '%s\r\n' 'Status: 200 OK';;
     301) printf '%b' "Status: 301 Moved Permanently\r\nLocation: ${HTTP_REFERER:=$2}\r\n";;
+    302) printf '%s\r\n' 'Status: 302 Found' "Location: $2";;
     403) printf '%b' 'Status: 403 Forbidden\r\n';;
     405) printf '%b' 'Status: 405 Method Not Allowed\r\n';;
     406) printf '%b' 'Status: 406 Not Acceptable\r\n';;
@@ -54,7 +55,7 @@ headerPrint() {
 
 ## faster echo
 _echo() {
-  printf "%b" "${*}"
+  printf "%s\r\n" "${*}"
 }
 
 urlDec() {
@@ -406,6 +407,43 @@ sgOpenvpn() {
   
 }
 
+showMesg2() {
+  local _MSG=$1
+  local _TIMEOUT=$2
+  local _SUBMSG=$3
+  _MSG=${_MSG:='Configuration'}
+  _TIMEOUT=${_TIMEOUT:='5'}
+  _SUBMSG="${_SUBMSG} <span id='timeout'>${_TIMEOUT}</span> seconds to get ready.."
+  headerPrint 200
+  htmlHead 
+#  htmlHead "<meta http-equiv='refresh' content='${_TIMEOUT};url=http://${HTTP_HOST}/admin'>"
+  _echo "<body>
+  <h1>Superglue control panel</h1>
+  <img src='http://${HTTP_HOST}/resources/img/superglueLogo.png' class='logo'>
+  <hr>
+  <h2 style='display:inline'>$_MSG</h2>
+  <span style='display:block'>$_SUBMSG</span>
+  <hr>
+  </body>
+  <script type='text/javascript'>(function(e){var t=document.getElementById(e);var n=t.innerHTML;var r=setInterval(function(){if(n==0){t.innerHTML='0';clearInterval(r);return}t.innerHTML=n;n--},1e3)})('timeout')
+  </script>
+  </html>"
+  
+}
+
+
+testRun() {
+  logThis 'starting test '
+  showMesg2 'Running test'
+  sleep 2; logThis 'running test'; sleep 5
+#  printf '%s' "Location: /admin/error/\r\n"
+#  printf '%b' "Status: 301 Moved Permanently\r\nLocation: http://${HTTP_HOST}/admin/error\r\n"
+#  exit
+  headerPrint '302' "http://${HTTP_HOST}/admin/error"
+#  exit  
+#  showMesg 'Test run' 
+}
+
 doUci() {
   local _CMD=''
   local _ARG=''
@@ -514,6 +552,7 @@ if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
                    *iwscan) iwScan;;
                    *sgddns) sgDdns;;
                     *sgvpn) sgOpenvpn;;
+                  *testrun) testRun;;
                          *) logThis 'bad action'; headerPrint 405; 
                             echo 'no such thing'; exit 1;;
   esac
@@ -560,6 +599,14 @@ wankey=$(doUci get wankey)
 <section class='inert'>
   <span style='display:block;'><% printf "System version: %s | Device: %s | OpenWRT: %s" "$sgver" "$devmod" "$openwrt" %></span>
   <span style='display:block;' id='uptime'><% uptime %></span>
+</section>
+
+<section>
+  <h2>Test run</h2>
+  <form method='post' action='/admin/testrun' name='test' class='elem' id='wanconf'>
+  <input type='hidden' name='testrun' value='go' class='inline'>
+  <input type='submit' value='Run' class='inline'>
+  </form>
 </section>
 
 <section>

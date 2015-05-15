@@ -1,5 +1,9 @@
 ## 
 
+## fix missing /dev/fd
+[ -h /dev/fd ] || ln -s /proc/self/fd /dev/fd
+
+## check SG specific dirs and mounts
 /opt/lib/scripts/sg-data-mount.sh &
 /opt/lib/scripts/sg-data-dirs.sh &
 

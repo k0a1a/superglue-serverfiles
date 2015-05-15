@@ -1,5 +1,13 @@
-_MAC=$(iw wlan0 info | awk 'BEGIN { FS=":" } /addr/ { print $5$6 }')                 
-_MAC="Superglue-"$_MAC                                                               
+
+if [ $(cat /tmp/sysinfo/board_name) == 'tl-wr710n' ]; then
+  ## tl-wr710n has three last pairs as MAC
+  _MAC=$(iw wlan0 info | awk 'BEGIN { FS=":" } /addr/ { print substr(toupper($4$5$6),1) }') 
+else
+  ## others have only two
+  _MAC=$(iw wlan0 info | awk 'BEGIN { FS=":" } /addr/ { print substr(toupper($5$6),1) }') 
+fi
+
+_MAC="Superglue-"$_MAC
 
 [ $(uci get wireless.@wifi-iface[0].ssid) != $_MAC ] && (
   uci set wireless.@wifi-iface[0].ssid=$_MAC

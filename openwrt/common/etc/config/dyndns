@@ -1,0 +1,4 @@
+
+config dyndns 'superglue'
+  option enable 0
+
