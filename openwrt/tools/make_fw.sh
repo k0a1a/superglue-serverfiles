@@ -158,7 +158,7 @@ if [[ $_ERR -eq 0 ]]; then
   [[ -h $_BUILDS/latest ]] || rm -rf $_BUILDS/latest
   ln -sf $_BUILDS/$_VERSION -T $_BUILDS/latest
 else
-  echo -e "\n$_TARGET build FAILED.. :/ \n"
+  echo -e "\n$_TARGET build FAILED.. :/\n"
   sleep 5
 fi
 
