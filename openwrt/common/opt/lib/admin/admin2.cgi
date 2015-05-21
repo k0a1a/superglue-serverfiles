@@ -134,12 +134,18 @@ wanSet() {
     ##     option proto 'dhcp' (and no 'option ifname' specified!)
 
     logThis "wan.ifname=$POST_wanifname"
-    if [[ $POST_wanifname == 'eth0' ]]; then
+    if [[ $POST_wanifname =~ 'eth' ]]; then
       doUci set wanifname $POST_wanifname
       doUci set wanwifacedis '1'
-    elif [[ $POST_wanifname == 'wlan1' ]]; then
+    elif [[ $POST_wanifname =~ 'wlan' ]]; then
       doUci set wanifname ''
       doUci set wanwifacedis ''
+    fi
+    ## case of dir505
+    if [[ $POST_wanifname == 'eth1' ]]; then
+      doUci set lanifname ''
+    elif [[ $POST_wanifname == 'wlan0' ]]; then
+      doUci set lanifname 'eth1'
     fi
     if [[ $POST_wanproto == 'dhcp' ]]; then
       doUci set wanproto dhcp
@@ -159,7 +165,7 @@ wanSet() {
       doUci set wandns $POST_wandns
     fi
 
-    if [[ $POST_wanifname == 'wlan1' ]]; then
+    if [[ $POST_wanifname =~ 'wlan' ]]; then
       ssidChange || showMesg 'wanSet: Wireless configuration failed'
     else
       doUci commit network &&
@@ -177,11 +183,18 @@ ssidChange() {
   ## check for iface
   [[ $POST_iface =~ ^('wan'|'lan')$ ]] || showMesg 'Error changing wireless settings' '5' 'unknown or unconfigured interface'
   logThis "$POST_iface is being set"
+  setQueryVars
 
   _p=$POST_iface
 
   ## default enc for now
-  local _enc='psk2'
+  local _enc='none'
+  if [[ $POST_wanenc == 'wpa2' ]]; then
+    _enc='psk2'
+  elif [[ $POST_wanenc == 'wpa1' ]]; then
+    _enc='psk'
+  fi
+
   if [[ $POST_iface == 'wan' ]]; then
     local _mode='sta'
     local _ssid="${POST_wanssid}"
@@ -214,7 +227,7 @@ ssidChange() {
       lanAddr
     fi
   fi
-
+  doUci commit network
   doUci commit wireless
   _ERR=$?
 
@@ -424,6 +437,7 @@ doUci() {
     wanssid) _ARG='wireless.@wifi-iface[1].ssid';;
     wanenc) _ARG='wireless.@wifi-iface[1].encryption';;
     wankey) _ARG='wireless.@wifi-iface[1].key';;
+    lanifname) _ARG='network.lan.ifname';;
     lanipaddr) _ARG='network.lan.ipaddr';;
     wanifname) _ARG='network.wan.ifname';;
     wanproto) _ARG='network.wan.proto';;
@@ -475,8 +489,7 @@ doUci() {
 ## ie: htmlhead "<meta http-equiv='refresh' content='2;URL=http://${HTTP_REFERER}'>"
 
 htmlHead() {
-_echo "<!-- obnoxious code below, keep your ports tight -->
-<!doctype html>
+_echo "<!doctype html>
 <html>
 <head>
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
@@ -521,12 +534,10 @@ if [[ "${REQUEST_METHOD^^}" == "POST" ]]; then
   esac
 fi
 
-## if URL is not (just) /admin
-#if [[ "${REQUEST_METHOD^^}" == "GET" ]]; then
-  if [[ "${REQUEST_URI/\/admin\//}" ]]; then
-   headerPrint '301' '/admin/' 
-  fi
-#fi
+## all other requests redirect to /admin/
+if [[ "${REQUEST_URI/\/admin\//}" ]]; then
+ headerPrint '301' '/admin/' 
+fi
 
 headerPrint '200'
 htmlHead
@@ -541,6 +552,14 @@ read openwrt < /etc/openwrt_version
 IFS=','
 wan=( $(ifaceStat wan) )
 IFS=$_IFS
+
+eth='eth0'
+wlan='wlan1'
+
+if [[ ${devmod} =~ 'DIR-505' ]]; then
+  eth='eth1'
+  wlan='wlan0'
+fi
 
 sgvpn=$(doUci get sgopenvpnenable)
 ddomain=$(doUci get sgddnsdomain)
@@ -570,8 +589,8 @@ wankey=$(doUci get wankey)
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>
   <select name='wanifname' id='wanifname' style='display:block'>
-  <option value='eth0' id='eth' <% ( [[ $wanifname =~ ('eth') ]] && _echo 'selected' ) %> >Wired (WAN port)</option>
-  <option value='wlan1' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %> >Wireless (WiFi)</option>
+  <option value='<% _echo $eth %>' id='eth' <% ( [[ $wanifname =~ ('eth') ]] && _echo 'selected' ) %>>Wired (WAN port)</option>
+  <option value='<% _echo $wlan %>' id='wlan' <% ( [[ $wanifname =~ ('wlan') ]] && _echo 'selected' ) %>>Wireless (WiFi)</option>
   </select>
   <fieldset id='wanwifi' <% ( [[ $wanifname =~ ('wlan') ]] && _echo "class='show elem'" || _echo "class='hide elem'" ) %>>
     
@@ -582,7 +601,8 @@ wankey=$(doUci get wankey)
     _echo "<option id=$wanssid selected>$wanssid</option>"
   fi %>
   </select>
-  <input type='password' name='wankey' placeholder='passphrase' value='<% _echo $wankey %>'>
+  <input type='hidden' id='wanenc' name='wanenc' class='elem' value='none'>
+  <input type='password' name='wankey' placeholder='wpa passphrase' value='<% _echo $wankey %>'>
 
   </fieldset>
 

@@ -3,9 +3,9 @@ config wifi-device 'radio0'
 	option channel 'auto'
 	option hwmode '11gn'
 	option path 'platform/ar933x_wmac'
-	option noscan '1'
+	## option noscan '1'
 	option htmode 'HT20'
-	option country 'US' ## US regdom is 
+	option country 'DE'
 
 config wifi-iface
 	option device 'radio0'
@@ -20,7 +20,7 @@ config wifi-iface
 	option network 'wan'
 	option disabled '1'
 	option mode 'sta'
-	option encryption 'psk2'
+	option encryption ''
 	option ssid ''
 	option key ''
 

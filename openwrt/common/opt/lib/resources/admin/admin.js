@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-/* make wanted 'elem' class elements to array or vars */
+/* add class='elem' elements to array 'el' */
 var el = [];
 (function() {
   x = document.getElementsByClassName('elem');
@@ -10,15 +10,6 @@ var el = [];
     el[el_id] = document.getElementById(el_id);
   }
 })();
-
-/*
-var uploadbtn = document.getElementById('uploadbtn');
-var uploadfile = document.getElementById('uploadfile');
-var wanconf = document.getElementById('wanconf');
-var wanssid = document.getElementById('wanssid');
-var wanwifi = document.getElementById('wanwifi');
-var wanaddr = document.getElementById('wanaddr');
-*/
 
 el['uploadbtn'].addEventListener('change', function (e) {
   el['uploadfile'].value = this.value.replace(/^.*\\/, "");
@@ -41,16 +32,23 @@ for (var i=0; i < submitbtns.length; i++){
 }
 
 el['wanconf'].addEventListener('change', function(e) { 
-  wanChange(e.target)
+  wanChange(e.target);
+  e.stopPropagation();
+});
+
+el['wanssid'].addEventListener('change', function(e) { 
+  if (enc = document.getElementById(e.target.value).getAttribute('data-enc')) {
+    el['wanenc'].value = enc;
+  }
   e.stopPropagation();
 });
 
 el['wanssid'].addEventListener('focus', function(e) {
   if (e.target.length == 1) {
     iwScan(e.target);
-    e.target.blur();
-    getFirstchild(e.target).blur();
-    getFirstchild(e.target).style.display = 'none';
+    // e.target.blur();
+    //getFirstchild(e.target).blur();
+    //getFirstchild(e.target).style.display = 'none';
   } else {
     iwScan(e.target);
   }
@@ -62,7 +60,7 @@ function wanChange(e) {
   switch (e[e.selectedIndex].id) {
     case 'wlan':
       el['wanwifi'].setAttribute('class','show');
-      //iwScan(el['wanssid']);
+      iwScan(el['wanssid']);
       break;
     case 'dhcp':
     //  wanaddr.setAttribute('class','hide');
@@ -93,26 +91,43 @@ function iwScan(e) {
     e.insertBefore(scan_el, e.firstChild);
   } else scan_el = document.getElementById('scan');
   scan_el.textContent = 'scanning for networks..';
-  scan_el.selected = 1;
+  scan_el.selected = true;
   ajaxReq('POST', '/admin/iwscan', 'null', function(xhr) {
     res = JSON.parse(xhr['response']);
     aps = res['results'].sort(compSort); /* get APs */
     aps_num = Object.keys(aps).length;
+    function updateAp() {
+      ap.setAttribute('data-bssid',  aps[i]['bssid']);
+      ap.setAttribute('data-quality',  aps[i]['quality']);
+      if (aps[i]['encryption']['enabled']) {
+        // WPA[1,2] present
+        if (aps[i]['encryption']['wpa']) {
+          // choose last (highest) WPA version
+          wpa = aps[i]['encryption']['wpa'][aps[i]['encryption']['wpa'].length - 1];
+          //console.log(ap.id + ':' + 'wpa' + wpa);
+          ap.setAttribute('data-enc', 'wpa' + wpa);
+        // assume WEP
+        } else {
+          ap.setAttribute('data-enc', 'wep');
+        }
+      // Open AP
+      } else {
+        ap.setAttribute('data-enc', 'none');
+      }
+    }
     for (i = 0; i < aps_num; i++) {
       // check if AP is already in the DOM
       if (document.getElementById(aps[i]['ssid'])) {
         //console.log('found ' + aps[i]['ssid'] + ' entry');
-        /* TODO: update existing records */
+        /* TODO: remove duplicate code */
+        ap = document.getElementById(aps[i]['ssid']);
+        //console.log('update: ');
+        updateAp();
       } else {
         ap = document.createElement('option');
         ap.id = aps[i]['ssid'];
-        ap.setAttribute('data-bssid',  aps[i]['bssid']);
-        ap.setAttribute('data-quality',  aps[i]['quality']);
-        if (aps[i]['encryption']['enabled']) {
-          ap.setAttribute('data-enc', 'wpa2');
-        } else {
-          ap.setAttribute('data-enc', 'false');
-        }
+        //console.log('add: ');
+        updateAp();
         ap.textContent = aps[i]['ssid'] ? aps[i]['ssid'] : '[hidden network]';
         e.appendChild(ap);
       }
@@ -123,10 +138,10 @@ function iwScan(e) {
       console.log('no scan results');
     }
   });
-  e.blur();
+  // e.blur();
   // just focusing someother element 
   // document.getElementById('wansubmit').focus();
-  return
+  return false;
 }
 
 /* v simple XHR */

@@ -44,7 +44,13 @@ select {
   background-size: 12px;
   background-position: 180px;
   cursor: pointer;
+/*  height: 100%; */
 }
+
+select option {
+/*  height: 50px; */
+}
+
 
 input {
   text-indent: 4px;

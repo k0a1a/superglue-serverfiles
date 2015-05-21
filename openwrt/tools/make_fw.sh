@@ -54,6 +54,9 @@ _OPENWRT_REVISION="$_PWD/openwrt.revision"
 ## browser extension (if any)
 _EXT_SRC="$_PWD/../../editor/build/superglue-firefox.xpi"
 
+## include devTools?
+_DEV_TOOLS=false
+
 ## get OpenWRT revision
 _OPENWRT=$(fgrep -m1 'REVISION:=' $_IMAGEBUILDER/include/version.mk || echo 'r00000')
 _OPENWRT=${_OPENWRT/REVISION:=/}
@@ -96,6 +99,11 @@ for _TARGET in $_TARGETS; do
   cp -Ra $_TARGET/* $_TARGET.tmp/
    sleep 1
 
+  if [ $_DEVTOOLS = false ]; then
+    echo 'removing devTools..'
+    rm -Rf $_TARGET.tmp/opt/lib/devTools
+  fi
+  
   if [[ -e $_EXT_SRC ]]; then
     echo 'copying browser extension..'
     _EXT_DST="$_TARGET.tmp/opt/lib/extension/superglue.xpi"
