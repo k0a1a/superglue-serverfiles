@@ -99,14 +99,14 @@ for _TARGET in $_TARGETS; do
   cp -Ra $_TARGET/* $_TARGET.tmp/
    sleep 1
 
-  if [ $_DEVTOOLS = false ]; then
+  if [[ $_DEVTOOLS = false ]]; then
     echo 'removing devTools..'
     rm -Rf $_TARGET.tmp/opt/lib/devTools
   fi
   
   if [[ -e $_EXT_SRC ]]; then
     echo 'copying browser extension..'
-    _EXT_DST="$_TARGET.tmp/opt/lib/extension/superglue.xpi"
+    _EXT_DST="$_TARGET.tmp/opt/lib/extension"
     [[ -e $(dirname $_EXT_DST) ]] || mkdir $(dirname $_EXT_DST)
     cp -Ra $_EXT_SRC $_EXT_DST
     sleep 1

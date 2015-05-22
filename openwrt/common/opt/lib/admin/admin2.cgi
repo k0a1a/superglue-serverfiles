@@ -660,7 +660,7 @@ wankey=$(doUci get wankey)
   <div style='display:inline-flex'>
   <div style='display:inline-block;'>
     <input type='text' name='lanssid' value='<% doUci get lanssid %>'>
-    <input type='password' name='lankey' value='<% doUci get lankey %>'>
+    <input type='password' name='lankey' value='<% doUci get lankey %>' placeholder='passphrase'>
   </div>
   <div style='display:inline-block;'>
     <input type='text' name='lanipaddr' value='<% doUci get lanipaddr %>'>

@@ -24,11 +24,14 @@ el['uploadbtn'].addEventListener('change', function (e) {
 var submitbtns = document.querySelectorAll('input[type="submit"]');
 for (var i=0; i < submitbtns.length; i++){
   submitbtns[i].addEventListener('click', function(e) {
-  if (e.target.hasAttribute('data-wait')) {
-    e.target.value = e.target.getAttribute('data-wait');
-  } else e.target.value = 'Working, please wait..';
-  e.stopPropagation();
-  }, false);
+    if (e.target.hasAttribute('data-wait')) {
+      e.target.value = e.target.getAttribute('data-wait');
+    } else e.target.value = 'Working, please wait..';
+ /* e.target.form.submit(function () {
+      e.target.disabled = true;
+    }); */
+    e.stopPropagation();
+  });
 }
 
 el['wanconf'].addEventListener('change', function(e) { 

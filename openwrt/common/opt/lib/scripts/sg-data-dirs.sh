@@ -22,7 +22,7 @@ _HTDOCS="$_WWW/htdocs"
 
 ## check if index.html is present
 [ -e $_HTDOCS/index.html ] || (
-  cp /opt/lib/resources/demo.html $_HTDOCS/default.html
+  cp /opt/lib/resources/default.html $_HTDOCS/default.html
   chown httpd $_HTDOCS/default.html 
   )
 
