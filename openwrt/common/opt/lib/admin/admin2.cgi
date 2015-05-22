@@ -195,6 +195,10 @@ ssidChange() {
     _enc='psk'
   fi
 
+  if [[ ! -z $POST_lankey ]]; then
+    _enc='psk2'
+  fi
+
   if [[ $POST_iface == 'wan' ]]; then
     local _mode='sta'
     local _ssid="${POST_wanssid}"
