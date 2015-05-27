@@ -14,8 +14,8 @@
 ##          406 (+ error message in debug mode) on error
 
 readonly _WWW='/www'
-readonly _PWDFILE="/opt/lib/htpasswd"
-readonly _HOSTPSK='/opt/lib/host.psk'
+readonly _PWDFILE="/etc/lighhtpd/htpasswd"
+readonly _HOSTPSK='/etc/host.psk'
 readonly _TMP='/tmp'
 readonly _LOG="${_WWW}/log/admin.log"
 readonly _SCRIPTS='/opt/lib/scripts'
@@ -101,13 +101,14 @@ validIp() {
 pwdChange() {
   local _USER='admin'
   local _REALM='superglue'
+  local _HASH _x
   [[ -e $_PWDFILE ]] || showMesg 'Password file not found'
   [[ -z "${POST_pwd##$POST_pwdd}" ]] || showMesg 'Passwords did not match'
   [[ ${#POST_pwd} -ge 6 ]] || showMesg 'Password must be at least 6 characters long'
-  local _HASH=$(printf '%s' "$_USER:$_REALM:${POST_pwd}" | md5sum | cut -b -32) &&
-  printf '%b' "${POST_pwd}\n${POST_pwd}\n" | passwd root &&
+  read _HASH _x < <(printf '%s' "$_USER:$_REALM:${POST_pwd}" | md5sum)
+  printf '%b' "${POST_pwd}\n${POST_pwd}\n" | passwd root &>/dev/null &&
   printf '%b' "$_USER:$_REALM:$_HASH\n" > $_PWDFILE &&
-  showMesg 'Password is changed' '2' ||
+  showMesg 'Password is changed' ||
   showMesg 'Password change failed!' '5'
 }
 
