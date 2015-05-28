@@ -7,4 +7,7 @@
 /opt/lib/scripts/sg-data-mount.sh &
 /opt/lib/scripts/sg-data-dirs.sh &
 
+## check if wifi wan is up
+/opt/lib/scripts/wifiwan-check.sh &
+
 exit 0

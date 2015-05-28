@@ -15,7 +15,7 @@
 
 readonly _WWW='/www'
 readonly _PWDFILE="/etc/lighhtpd/htpasswd"
-readonly _HOSTPSK='/etc/host.psk'
+readonly _HOSTPSK='/etc/openvpn/host.psk'
 readonly _TMP='/tmp'
 readonly _LOG="${_WWW}/log/admin.log"
 readonly _SCRIPTS='/opt/lib/scripts'
@@ -170,9 +170,9 @@ wanSet() {
       ssidChange || showMesg 'wanSet: Wireless configuration failed'
     else
       doUci commit network &&
-      doUci commit wireless &&
+      doUci commit wireless 
       dtach -n -zE $_SCRIPTS/net-restart.sh &>/dev/null
-    fi
+  fi
     _ERR=$?
     [[ $_ERR -eq 0 ]] &&
     showMesg 'Internet connection is being configured' '25' 'check your Internet connection on completion' ||

@@ -1,1 +1,1 @@
-[ -f /etc/host.psk ] || /usr/sbin/openvpn --genkey --secret /etc/host.psk
+[ -f /etc/openvpn/host.psk ] || /usr/sbin/openvpn --genkey --secret /etc/openvpn/host.psk
