@@ -52,7 +52,7 @@ let _MINOR++
 _OPENWRT_REVISION="$_PWD/openwrt.revision"
 
 ## browser extension (if any)
-_EXT_SRC="$_PWD/../../editor/build/superglue-firefox.xpi"
+#_EXT_SRC="$_PWD/../../editor/build/superglue-firefox.xpi"
 
 ## include devTools?
 _DEV_TOOLS=false
@@ -124,7 +124,7 @@ for _TARGET in $_TARGETS; do
   sleep 2
 
   ## currently unused packages
-  # kmod-fs-vfat kmod-fs-btrfs btrfs-progs kmod-fs-ext4 sudo 
+  # kmod-fs-vfat kmod-fs-ext4 sudo 
 
   make image PROFILE=$_TARGET PACKAGES="bash gawk openssh-sftp-server haserl lighttpd lighttpd-mod-access lighttpd-mod-cgi lighttpd-mod-compress lighttpd-mod-accesslog lighttpd-mod-rewrite lighttpd-mod-auth lighttpd-mod-alias lighttpd-mod-proxy lighttpd-mod-setenv blkid block-mount mini-sendmail kmod-usb-storage kmod-scsi-generic mount-utils kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-utf8 kmod-nls-base coreutils-stat mini-httpd-htpasswd wireless-tools avahi-daemon kmod-fs-btrfs btrfs-progs swap-utils sfdisk coreutils-base64 coreutils-sha1sum rpcd-mod-iwinfo procps-ps uhttpd uhttpd-mod-ubus openvpn-openssl dtach curl" FILES=$_PWD/$_TARGET.tmp BIN_DIR=$_BIN_DIR/openwrt
   _ERR=$?

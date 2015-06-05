@@ -279,6 +279,7 @@ showMesg() {
 
 updateFw() {
   local _FWFILE="${_TMP}/fwupload.bin"
+  local _FWRESET='-c' ## preserve changes in /etc/ by default
   _OUT="$(sysupgrade -T $_FWFILE 2>&1)" ||
   { _ERR=$?; rm -rf $_FWFILE; showMesg 'This is not a firmware!' '3' "$_OUT"; }
   [[ $POST_fwreset == 'on' ]] && { _FWRESET='-n'; logThis 'fw reset requested'; }
@@ -648,6 +649,7 @@ wankey=$(doUci get wankey)
       </div>
       <div style='display:inline-block;'>
         <select name='sgddnsdomain' class='inline'>
+          <option value='spg.lu' <% [[ "$ddomain" == 'spg.lu' ]] && _echo 'selected' %>>.spg.lu</option>
           <option value='spgl.it' <% [[ "$ddomain" == 'spgl.it' ]] && _echo 'selected' %>>.spgl.it</option>
           <option value='spgl.cc' <% [[ "$ddomain" == 'spgl.cc' ]] && _echo 'selected' %>>.spgl.cc</option>
           <option value='superglue.it' <% [[ "$ddomain" == 'superglue.it' ]] && _echo 'selected' %>>.superglue.it</option>
